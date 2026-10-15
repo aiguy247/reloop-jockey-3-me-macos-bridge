@@ -1,0 +1,38 @@
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Local builds
+build/
+DerivedData/
+*.o
+*.dSYM/
+reloop_bridge_engine_*
+
+# Runtime / diagnostic data
+*.log
+*.wav
+*.aiff
+*.aif
+*.caf
+*.pcm
+*.raw
+*.npy
+*.npz
+*.csv
+ANALYSIS_METRICS.json
+FILE_*_RAW_SCREEN_EVENTS.json
+FILE_*_CANDIDATE_DETAILS.json
+HIGH_CONFIDENCE_SNIPPETS/
+
+# Local package / temporary work
+*.tmp
+*.temp
+*.bak
+*~
+.env
+.env.*
+
+# Keep curated distribution archives under dist/
+*.zip
+!dist/*.zip
