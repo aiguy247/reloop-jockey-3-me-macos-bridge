@@ -55,20 +55,19 @@ This is not a publication blocker, but public users should not be told the entir
 
 ## Author identity
 
-Reachable Git commits currently expose:
+Public Git author name is intentionally **Guy R. Hood**.
 
-- author name: `Guy R. Hood`;
-- GitHub noreply email associated with the account.
-
-That metadata will become public if the repository becomes public.
-
-**Decision required before publication:** keep that attribution or rewrite author metadata to a different public identity.
+Reachable commits use Guy R. Hood with the GitHub noreply email associated with the account. No author-history rewrite is required.
 
 ## License
 
-No license is currently present.
+The repository uses the **MIT License**.
 
-**Decision required before publication:** choose the repository license. MIT is the recommended default for this small open-source compatibility project unless the owner wants a different permission model.
+Copyright holder:
+
+`Guy R. Hood`
+
+See `LICENSE`.
 
 ## Third-party scope
 
@@ -81,8 +80,8 @@ The project is independent and unaffiliated with Reloop, Native Instruments or t
 Before changing repository visibility:
 
 - old full-settings Git object no longer retrievable;
-- author identity decision complete;
-- license added;
+- author identity confirmed as Guy R. Hood;
+- MIT license added;
 - portable installer/service package built and live-qualified, or repository clearly published as source-only with no general installer;
 - final secret/privacy scan;
 - final README/install smoke review;

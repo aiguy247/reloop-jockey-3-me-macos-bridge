@@ -91,4 +91,4 @@ This project separates structural validation, runtime evidence and live hardware
 
 The repository remains private while the public-readiness checklist is completed. See `docs/PUBLIC_READINESS.md`.
 
-No license has been added yet.
+Licensed under the **MIT License**. See `LICENSE`.
