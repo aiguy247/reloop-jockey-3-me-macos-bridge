@@ -1,18 +1,18 @@
 # Qualified baseline — engine v8.0.4 / service v8.1.3
 
-## Source of truth
+## Mapping source of truth
 
-The current Traktor mapping source of truth is the exact full Controller Mappings export produced after the final live-qualified changes on 9 October 2026.
+The public/reusable mapping baseline is five individual Controller Manager exports taken from the live-qualified Traktor configuration:
 
-Raw filename:
+- `mapping/Jockey_3_Deck_A.tsi`
+- `mapping/Jockey_3_Deck_B.tsi`
+- `mapping/Jockey_3_Mixer_Sektion.tsi`
+- `mapping/Jockey_3_Sample_C.tsi`
+- `mapping/Jockey_3_Sample_D.tsi`
 
-`Reloop_CURRENT_QUALIFIED_BASELINE_AB-playpause-flash_2026-10-09.tsi`
+A full Traktor settings export is intentionally excluded because it contains global and user-specific settings unrelated to this controller project.
 
-SHA-256:
-
-`4d0dc9f346507f86a6b084560638b8c5b5fa71b4a2c1af702d6961552046840e`
-
-The repository stores the exact original `.tsi` bytes directly. Do not rebuild it from an older generated mapping.
+Per-file SHA-256 values are recorded in `checksums/MAPPING_ONLY_SHA256SUMS.txt`.
 
 ## Bridge baseline
 
@@ -37,10 +37,10 @@ When AUTO/Cruise changes the actual Tempo Master, both master indicators follow 
 
 ## Mapping inventory
 
-The authoritative export contains **13 Controller Manager devices**, including five active Reloop devices. The Reloop devices contain **689 commands / 687 bindings** in total.
+The repository mapping baseline contains exactly five Reloop Controller Manager devices: Deck A, Deck B, Mixer, Sample C and Sample D.
 
-One deliberate file peculiarity must be preserved: Deck B has two command `365` OUT records with no MIDI binding. They exist in the exact user export and are not to be normalized away without a specific reason.
+The original full Traktor settings export is not part of the repository's rewritten reachable branch/tag history.
 
 ## Change policy
 
-Future mapping work must start from the exact current export, not from generated predecessors. Future bridge work must preserve the v8.0.2-qualified audio foundation unless an observed regression requires reopening it.
+Future mapping work must start from the five exact current Controller Manager exports, not from generated predecessors. Future bridge work must preserve the v8.0.2-qualified audio foundation unless an observed regression requires reopening it.

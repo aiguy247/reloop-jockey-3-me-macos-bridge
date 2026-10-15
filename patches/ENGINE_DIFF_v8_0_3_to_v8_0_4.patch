@@ -1,0 +1,241 @@
+--- reloop_jockey3_bridge_v8_0_3_master_led_gate_48k.m
++++ reloop_jockey3_bridge_v8_0_4_master_play_flash_48k.m
+@@ -61,7 +61,7 @@
+     MidiOutRing *outRing;
+ 
+     /*
+-     * v8.0.3 MIDI OUT filter state.
++     * v8.0.4 MIDI OUT filter state.
+      *
+      * Traktor sends two hidden "actual Tempo Master" outputs on Channel 16:
+      *   Ch16.Note.C0  = Deck A master state
+@@ -71,8 +71,16 @@
+      *   Ch01.Note.A-1 = Deck A trash LED
+      *   Ch02.Note.A-1 = Deck B trash LED
+      *
++     * Play/Pause LED outputs are:
++     *   Ch01.Note.D1 = Deck A Play/Pause LED
++     *   Ch02.Note.D1 = Deck B Play/Pause LED
++     *
+      * The filter forwards Beat Phase only for the deck Traktor reports as
+-     * Tempo Master. All unrelated Traktor MIDI OUT messages pass through.
++     * Tempo Master and mirrors that same phase value to the master deck's
++     * Play/Pause LED. While a deck is master, its ordinary steady Play/Pause
++     * LED output is cached but suppressed. When it stops being master, the
++     * cached ordinary Play/Pause LED state is restored immediately. All other
++     * Traktor MIDI OUT messages pass through unchanged.
+      */
+     uint8_t midiOutFilterRunningStatus;
+     uint8_t midiOutFilterMessage[3];
+@@ -80,9 +88,14 @@
+     uint8_t midiOutFilterExpectedLength;
+     atomic_bool deckAMaster;
+     atomic_bool deckBMaster;
++    uint8_t deckAPlayLedValue;
++    uint8_t deckBPlayLedValue;
+     atomic_ulong masterStateMessagesFiltered;
+     atomic_ulong beatPhaseMessagesForwarded;
+     atomic_ulong beatPhaseMessagesBlocked;
++    atomic_ulong playLedMessagesMirrored;
++    atomic_ulong playLedMessagesSuppressed;
++    atomic_ulong playLedStateRestores;
+     pthread_mutex_t midiOutFilterMutex;
+     bool midiOutFilterMutexReady;
+ 
+@@ -259,6 +272,36 @@
+         0
+     };
+     midiOutRingPushMessage(bridge->outRing, message, 3);
++}
++
++static void coreMidiSendPlayLedValue(CoreMidiBridge *bridge,
++                                     uint8_t deck,
++                                     uint8_t value)
++{
++    if (!bridge || !bridge->outRing)
++        return;
++
++    const uint8_t message[3] = {
++        (uint8_t)(deck == 0 ? 0x90 : 0x91),
++        26, /* D1 */
++        value
++    };
++    midiOutRingPushMessage(bridge->outRing, message, 3);
++}
++
++static void coreMidiRestorePlayLed(CoreMidiBridge *bridge, uint8_t deck)
++{
++    if (!bridge)
++        return;
++
++    uint8_t value = deck == 0
++        ? bridge->deckAPlayLedValue
++        : bridge->deckBPlayLedValue;
++
++    coreMidiSendPlayLedValue(bridge, deck, value);
++    atomic_fetch_add_explicit(&bridge->playLedStateRestores,
++                              1,
++                              memory_order_relaxed);
+ }
+ 
+ static void coreMidiHandleOutputMessage(CoreMidiBridge *bridge,
+@@ -289,28 +332,38 @@
+             bool on = (type == 0x90 && value > 0);
+ 
+             if (note == 12) {
+-                atomic_store_explicit(&bridge->deckAMaster,
+-                                      on,
+-                                      memory_order_release);
++                bool wasA = atomic_exchange_explicit(&bridge->deckAMaster,
++                                                     on,
++                                                     memory_order_acq_rel);
+                 if (on) {
+-                    atomic_store_explicit(&bridge->deckBMaster,
+-                                          false,
+-                                          memory_order_release);
++                    bool wasB = atomic_exchange_explicit(&bridge->deckBMaster,
++                                                         false,
++                                                         memory_order_acq_rel);
+                     coreMidiForceTrashLedOff(bridge, 1);
+-                } else {
++                    if (wasB)
++                        coreMidiRestorePlayLed(bridge, 1);
++                    if (!wasA)
++                        coreMidiSendPlayLedValue(bridge, 0, 0);
++                } else if (wasA) {
+                     coreMidiForceTrashLedOff(bridge, 0);
++                    coreMidiRestorePlayLed(bridge, 0);
+                 }
+             } else {
+-                atomic_store_explicit(&bridge->deckBMaster,
+-                                      on,
+-                                      memory_order_release);
++                bool wasB = atomic_exchange_explicit(&bridge->deckBMaster,
++                                                     on,
++                                                     memory_order_acq_rel);
+                 if (on) {
+-                    atomic_store_explicit(&bridge->deckAMaster,
+-                                          false,
+-                                          memory_order_release);
++                    bool wasA = atomic_exchange_explicit(&bridge->deckAMaster,
++                                                         false,
++                                                         memory_order_acq_rel);
+                     coreMidiForceTrashLedOff(bridge, 0);
+-                } else {
++                    if (wasA)
++                        coreMidiRestorePlayLed(bridge, 0);
++                    if (!wasB)
++                        coreMidiSendPlayLedValue(bridge, 1, 0);
++                } else if (wasB) {
+                     coreMidiForceTrashLedOff(bridge, 1);
++                    coreMidiRestorePlayLed(bridge, 1);
+                 }
+             }
+ 
+@@ -321,8 +374,40 @@
+         }
+ 
+         /*
++         * Ordinary Play/Pause LED state. Preserve it for the non-master
++         * behavior, but do not let it fight the Beat Phase mirror while that
++         * deck is the actual Tempo Master.
++         */
++        if ((type == 0x90 || type == 0x80) &&
++            note == 26 &&
++            (channel == 0 || channel == 1)) {
++            uint8_t ledValue = (type == 0x90) ? value : 0;
++            if (channel == 0)
++                bridge->deckAPlayLedValue = ledValue;
++            else
++                bridge->deckBPlayLedValue = ledValue;
++
++            bool isMaster =
++                channel == 0
++                    ? atomic_load_explicit(&bridge->deckAMaster,
++                                           memory_order_acquire)
++                    : atomic_load_explicit(&bridge->deckBMaster,
++                                           memory_order_acquire);
++
++            if (isMaster) {
++                atomic_fetch_add_explicit(&bridge->playLedMessagesSuppressed,
++                                          1,
++                                          memory_order_relaxed);
++            } else {
++                midiOutRingPushMessage(bridge->outRing, message, length);
++            }
++            return;
++        }
++
++        /*
+          * Beat Phase directed to the two physical trash LEDs.
+-         * Forward only the actual Tempo Master's LED.
++         * Forward only the actual Tempo Master's trash LED and mirror the
++         * same phase value to that deck's Play/Pause LED.
+          */
+         if ((type == 0x90 || type == 0x80) &&
+             note == 9 &&
+@@ -336,7 +421,18 @@
+ 
+             if (isMaster) {
+                 midiOutRingPushMessage(bridge->outRing, message, length);
++
++                uint8_t playMessage[3] = {
++                    status,
++                    26, /* D1 */
++                    value
++                };
++                midiOutRingPushMessage(bridge->outRing, playMessage, 3);
++
+                 atomic_fetch_add_explicit(&bridge->beatPhaseMessagesForwarded,
++                                          1,
++                                          memory_order_relaxed);
++                atomic_fetch_add_explicit(&bridge->playLedMessagesMirrored,
+                                           1,
+                                           memory_order_relaxed);
+             } else {
+@@ -477,9 +573,14 @@
+     bridge->midiOutFilterExpectedLength = 0;
+     atomic_init(&bridge->deckAMaster, false);
+     atomic_init(&bridge->deckBMaster, false);
++    bridge->deckAPlayLedValue = 0;
++    bridge->deckBPlayLedValue = 0;
+     atomic_init(&bridge->masterStateMessagesFiltered, 0);
+     atomic_init(&bridge->beatPhaseMessagesForwarded, 0);
+     atomic_init(&bridge->beatPhaseMessagesBlocked, 0);
++    atomic_init(&bridge->playLedMessagesMirrored, 0);
++    atomic_init(&bridge->playLedMessagesSuppressed, 0);
++    atomic_init(&bridge->playLedStateRestores, 0);
+     bridge->midiOutFilterMutexReady = false;
+     if (pthread_mutex_init(&bridge->midiOutFilterMutex, NULL) != 0)
+         return (OSStatus)-1;
+@@ -2409,7 +2510,7 @@
+         signal(SIGINT, handleSignal);
+         signal(SIGTERM, handleSignal);
+ 
+-        printf("Reloop Jockey 3 ME audio + CoreMIDI bridge v8.0.3 (v8.0.2 qualified audio path + Tempo Master LED gate)\n");
++        printf("Reloop Jockey 3 ME audio + CoreMIDI bridge v8.0.4 (v8.0.2 qualified audio path + Tempo Master trash/Play LED gate)\n");
+         printf("48 kHz, vendor-trace init + direct completion-driven async USB streaming.\n");
+         printf("Firmware is NOT modified by this program.\n");
+         printf("BlackHole channels 1/2 -> Reloop Master L/R\n");
+@@ -3765,7 +3866,7 @@
+ 
+         printf("\nAUDIO + MIDI BRIDGE ACTIVE\n");
+         printf("CoreMIDI In-Port/Out-Port in Traktor: Reloop Jockey 3 ME (Bridge)\n");
+-        printf("v8.0.3 MIDI OUT: actual Tempo Master gates Deck A/B Beat Phase trash LEDs; all unrelated MIDI OUT passes through.\n");
++        printf("v8.0.4 MIDI OUT: actual Tempo Master gates Deck A/B Beat Phase trash LEDs and mirrors phase to the master Play/Pause LED; non-master Play LEDs remain normal.\n");
+         printf("Playback transport: one dedicated Mach real-time pthread, synchronous %d-byte bulk writes.\n",
+                BATCH_SIZE);
+         printf("Set Traktor Audio Device to BlackHole 16ch at 48000 Hz.\n");
+@@ -4197,6 +4298,12 @@
+                atomic_load(&coreMidi->masterStateMessagesFiltered),
+                atomic_load(&coreMidi->beatPhaseMessagesForwarded),
+                atomic_load(&coreMidi->beatPhaseMessagesBlocked));
++        printf("Tempo Master Play LED mirror: phase messages mirrored: %lu; "
++               "ordinary Play LED messages suppressed while master: %lu; "
++               "ordinary Play states restored: %lu\n",
++               atomic_load(&coreMidi->playLedMessagesMirrored),
++               atomic_load(&coreMidi->playLedMessagesSuppressed),
++               atomic_load(&coreMidi->playLedStateRestores));
+         printf("BlackHole frames accepted: %llu\n",
+                (unsigned long long)atomic_load(&ring->framesReceived));
+         printf("BlackHole frames dropped: %llu\n",

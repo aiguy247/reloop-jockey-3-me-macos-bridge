@@ -1,7 +1,7 @@
 # Current mapping specification
 
 **Checkpoint:** 9 October 2026  
-**Authoritative TSI SHA-256:** `4d0dc9f346507f86a6b084560638b8c5b5fa71b4a2c1af702d6961552046840e`
+**Authoritative mapping artifacts:** five mapping-only Controller Manager exports; see `checksums/MAPPING_ONLY_SHA256SUMS.txt`
 
 The exact TSI is source truth. This file is the human-readable behavior specification.
 

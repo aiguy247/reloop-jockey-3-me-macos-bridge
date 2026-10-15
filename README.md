@@ -11,8 +11,8 @@ The project exists because the controller's original macOS driver path is no lon
 | Bridge engine | **v8.0.4** |
 | Service/package | **v8.1.3** |
 | Audio/USB foundation | **v8.0.2-qualified path, unchanged in v8.0.4** |
-| Traktor mapping | `Reloop_CURRENT_QUALIFIED_BASELINE_AB-playpause-flash_2026-10-09.tsi` |
-| Mapping SHA-256 | `4d0dc9f346507f86a6b084560638b8c5b5fa71b4a2c1af702d6961552046840e` |
+| Traktor mapping | **Five mapping-only Controller Manager exports** |
+| Mapping checksums | `checksums/MAPPING_ONLY_SHA256SUMS.txt` |
 | Tested OS | **macOS Sonoma 14.8.9, Apple Silicon** |
 | Controller firmware observed | **1.0.6** |
 
@@ -36,7 +36,7 @@ This baseline was live-tested with the actual controller. The v8.0.4 change adds
 ```text
 src/        exact qualified Objective-C bridge source
 service/    launchd installer, status and uninstall scripts
-mapping/    exact qualified Traktor mapping export
+mapping/    five qualified mapping-only Controller Manager exports
 patches/    source-level bridge diffs
 dist/       release/download notes; binary ZIPs live in GitHub Releases
 tools/      mapping audit tooling
@@ -44,21 +44,13 @@ docs/       architecture, qualification and mapping documentation
 checksums/  SHA-256 records for qualified artifacts
 ```
 
-## Verify the exact Traktor mapping
+## Qualified Traktor mappings
 
-The authoritative `.tsi` is committed directly so it can be downloaded and imported without reconstruction.
+The repository contains five mapping-only Controller Manager exports: Deck A, Deck B, Mixer, Sample C and Sample D.
 
-```bash
-shasum -a 256 mapping/Reloop_CURRENT_QUALIFIED_BASELINE_AB-playpause-flash_2026-10-09.tsi
-```
+A full Traktor settings export is intentionally **not** stored here. Personal/global Traktor preferences, audio settings, paths, playlists and unrelated controller mappings are excluded.
 
-Expected SHA-256:
-
-```text
-4d0dc9f346507f86a6b084560638b8c5b5fa71b4a2c1af702d6961552046840e
-```
-
-Do not normalize or rebuild this mapping from older patches. It is the exact user-exported, live-qualified source of truth.
+Exact per-file SHA-256 values are recorded in `checksums/MAPPING_ONLY_SHA256SUMS.txt`.
 
 ## Distribution strategy
 
@@ -93,7 +85,7 @@ This project deliberately separates:
 
 A mapping or bridge change is not considered qualified merely because it compiles or passes a binary audit. Live controller behavior is the final acceptance test.
 
-The project history also records failed approaches and why they failed. Those failures materially changed the working method: physical controls are not inferred from MIDI addresses when live evidence exists, unrelated Traktor rows are not cloned without auditing modifiers and interaction semantics, and the current user-exported TSI always outranks generated predecessors.
+The project history also records failed approaches and why they failed. Those failures materially changed the working method: physical controls are not inferred from MIDI addresses when live evidence exists, unrelated Traktor rows are not cloned without auditing modifiers and interaction semantics, and the current mapping-only Controller Manager exports outrank generated predecessors.
 
 ## Status
 

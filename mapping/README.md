@@ -1,19 +1,17 @@
-# Qualified Traktor mapping
+# Qualified Reloop controller mappings
 
-Authoritative mapping:
+This repository intentionally contains only the five Reloop Controller Manager mappings needed for this project.
 
-`Reloop_CURRENT_QUALIFIED_BASELINE_AB-playpause-flash_2026-10-09.tsi`
+It does not contain a full Traktor settings export. Global Traktor preferences, audio settings, browser/file-management settings, personal paths, playlists, and unrelated controllers are deliberately excluded.
 
-SHA-256:
+Included mappings:
 
-`4d0dc9f346507f86a6b084560638b8c5b5fa71b4a2c1af702d6961552046840e`
+- `Jockey_3_Deck_A.tsi`
+- `Jockey_3_Deck_B.tsi`
+- `Jockey_3_Mixer_Sektion.tsi`
+- `Jockey_3_Sample_C.tsi`
+- `Jockey_3_Sample_D.tsi`
 
-The repository stores the exact original `.tsi` directly so it can be downloaded and imported without reconstruction.
+Each file was exported individually from Traktor's Controller Manager from the live-qualified configuration.
 
-Verify on macOS:
-
-```bash
-shasum -a 256 Reloop_CURRENT_QUALIFIED_BASELINE_AB-playpause-flash_2026-10-09.tsi
-```
-
-The checksum must match exactly before treating the file as the qualified baseline.
+Per-file SHA-256 values are recorded in `checksums/MAPPING_ONLY_SHA256SUMS.txt`.

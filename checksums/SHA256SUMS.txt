@@ -1,6 +1,8 @@
-# Qualified source and mapping
+# Qualified bridge source
 344a9572c2ada2b3c4e2839f2a91a8416eddb5236eb06963e1b6c0d1b54b3398  src/reloop_jockey3_bridge_v8_0_4_master_play_flash_48k.m
-4d0dc9f346507f86a6b084560638b8c5b5fa71b4a2c1af702d6961552046840e  mapping/Reloop_CURRENT_QUALIFIED_BASELINE_AB-playpause-flash_2026-10-09.tsi
+
+# Mapping-only Controller Manager exports
+# Exact per-file hashes are in checksums/MAPPING_ONLY_SHA256SUMS.txt
 
 # GitHub Release asset (not committed to Git history)
 5255a15b3f9062b6df068daa0f118079306e8e6a5e3ac6e408612bac074aa908  Reloop_Controller_Bridge_v8_1_3.zip

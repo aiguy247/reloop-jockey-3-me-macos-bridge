@@ -1,0 +1,27 @@
+{
+  "engine": "v8.0.4",
+  "service": "v8.1.3",
+  "parent_engine": "v8.0.3",
+  "parent_source_sha256": "f474dd21da1357db802113b8e0b906075a1e5ee32c84475e394c42c75c006485",
+  "source_sha256": "344a9572c2ada2b3c4e2839f2a91a8416eddb5236eb06963e1b6c0d1b54b3398",
+  "traktor_mapping_change_required": false,
+  "audio_usb_path_modified": false,
+  "new_midi_behavior": [
+    "cache Deck A/B normal Play/Pause LED output",
+    "suppress normal Play/Pause LED output only while that deck is actual Tempo Master",
+    "mirror actual-master Beat Phase to Play/Pause LED",
+    "restore cached normal Play/Pause LED when deck ceases to be master"
+  ],
+  "play_led_midi": {
+    "deck_a": "Ch01.Note.D1",
+    "deck_b": "Ch02.Note.D1"
+  },
+  "tempo_master_hidden_state": {
+    "deck_a": "Ch16.Note.C0",
+    "deck_b": "Ch16.Note.C#0"
+  },
+  "beat_phase_trash": {
+    "deck_a": "Ch01.Note.A-1",
+    "deck_b": "Ch02.Note.A-1"
+  }
+}
