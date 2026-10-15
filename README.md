@@ -34,22 +34,21 @@ This baseline was live-tested with the actual controller. The v8.0.4 change adds
 ## Repository layout
 
 ```text
-src/        Objective-C bridge engine source
+src/        exact qualified Objective-C bridge source
 service/    launchd installer, status and uninstall scripts
-mapping/    exact qualified Traktor mapping, stored losslessly as .xz
+mapping/    exact qualified Traktor mapping export
 patches/    source-level bridge diffs
-dist/       qualified packaged installer/source bundle
+dist/       release/download notes; binary ZIPs live in GitHub Releases
 tools/      mapping audit tooling
 docs/       architecture, qualification and mapping documentation
 checksums/  SHA-256 records for qualified artifacts
 ```
 
-## Restore the exact Traktor mapping
+## Verify the exact Traktor mapping
 
-The authoritative `.tsi` is stored losslessly with `xz` compression because the raw Traktor export is about 6.5 MB while compressing to a small artifact.
+The authoritative `.tsi` is committed directly so it can be downloaded and imported without reconstruction.
 
 ```bash
-xz -dk mapping/Reloop_CURRENT_QUALIFIED_BASELINE_AB-playpause-flash_2026-10-09.tsi.xz
 shasum -a 256 mapping/Reloop_CURRENT_QUALIFIED_BASELINE_AB-playpause-flash_2026-10-09.tsi
 ```
 
@@ -60,6 +59,16 @@ Expected SHA-256:
 ```
 
 Do not normalize or rebuild this mapping from older patches. It is the exact user-exported, live-qualified source of truth.
+
+## Distribution strategy
+
+Source, scripts, mapping files, checksums and reproducible documentation belong in Git history. Downloadable installation ZIPs belong in **GitHub Releases**, so replacing a binary build does not permanently grow the repository history.
+
+The qualified v8.1.3 installer ZIP has SHA-256:
+
+`5255a15b3f9062b6df068daa0f118079306e8e6a5e3ac6e408612bac074aa908`
+
+The Release asset will be added after the public-readiness audit.
 
 ## Qualification evidence
 

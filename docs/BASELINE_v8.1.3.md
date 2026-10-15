@@ -12,7 +12,7 @@ SHA-256:
 
 `4d0dc9f346507f86a6b084560638b8c5b5fa71b4a2c1af702d6961552046840e`
 
-The repository stores those exact bytes as `mapping/...tsi.xz`. Decompression restores the original file byte-for-byte.
+The repository stores the exact original `.tsi` bytes directly. Do not rebuild it from an older generated mapping.
 
 ## Bridge baseline
 
@@ -20,6 +20,8 @@ The repository stores those exact bytes as `mapping/...tsi.xz`. Decompression re
 - Service/package: **v8.1.3**
 - Engine source SHA-256: `344a9572c2ada2b3c4e2839f2a91a8416eddb5236eb06963e1b6c0d1b54b3398`
 - Distribution ZIP SHA-256: `5255a15b3f9062b6df068daa0f118079306e8e6a5e3ac6e408612bac074aa908`
+
+The distribution ZIP is a GitHub Release asset, not a file kept in Git history.
 
 ## Live-qualified visible behavior
 

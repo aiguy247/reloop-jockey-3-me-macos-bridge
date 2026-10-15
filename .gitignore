@@ -25,6 +25,9 @@ FILE_*_RAW_SCREEN_EVENTS.json
 FILE_*_CANDIDATE_DETAILS.json
 HIGH_CONFIDENCE_SNIPPETS/
 
+# Distribution archives belong in GitHub Releases, not Git history
+*.zip
+
 # Local package / temporary work
 *.tmp
 *.temp
@@ -32,7 +35,3 @@ HIGH_CONFIDENCE_SNIPPETS/
 *~
 .env
 .env.*
-
-# Keep curated distribution archives under dist/
-*.zip
-!dist/*.zip
