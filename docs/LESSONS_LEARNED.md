@@ -1,7 +1,5 @@
 # Engineering lessons learned
 
-The project intentionally records failed approaches because several failures materially improved the development process.
-
 ## 1. A MIDI address is not enough to identify a physical control
 
 An early Deck D change translated an address through a factory chart and identified the wrong control. Live testing showed the control was FX Select 3.
@@ -12,28 +10,40 @@ An early Deck D change translated an address through a factory chart and identif
 
 Several Sync rows were structurally valid but behaved as Hold inputs instead of the intended direct OFF action.
 
-**Rule:** a TSI that parses correctly is not automatically functionally correct. Controller Manager semantics and live behavior must be checked.
+**Rule:** a TSI that parses correctly is not automatically functionally correct.
 
 ## 3. Copying an unrelated mapping row can copy hidden behavior
 
 An Unload mapping inherited `M1=1` from an unrelated template. Clearing the modifier fixed the behavior.
 
-**Rule:** when reusing a Traktor row, audit modifiers, controller type, interaction mode, assignment, set value and OUT behavior.
+**Rule:** when reusing a row, audit modifiers, controller type, interaction mode, assignment, set value and OUT behavior.
 
-## 4. Current user exports outrank generated masters
+## 4. Current live exports outrank generated predecessors
 
 Manual fixes and Traktor re-exporting can change internal bytes/order while retaining intended semantics.
 
-**Rule:** once a live-proven full export exists, it becomes the authoritative source. Do not reconstruct it from older generated files.
+**Rule:** once live-proven individual Controller Manager exports exist, those current exports become source truth. Do not reconstruct them from older generated files.
 
-## 5. Protect a qualified transport layer
+## 5. Separate bridge requirements from workflow preferences
 
-Once the v8.0.2 audio/USB path survived long-run testing, subsequent LED work was deliberately isolated from that code.
+The qualified mappings include both bridge-integration rows and personal/project workflow choices.
 
-**Rule:** do not reopen a qualified subsystem without evidence of a regression. Make the smallest change that solves the new problem.
+**Rule:** do not tell another user that Favorites, Recorder/Cruise, EQ or Deck C/D customizations are required by the audio bridge when they are not.
 
-## 6. A recovered stall is still evidence
+## 6. Protect a qualified transport layer
 
-A 119.3 ms USB write did not produce a logged underrun because the catch-up mechanism worked. That does not make the transport timing perfect.
+Once the v8.0.2 audio/USB path survived long-run testing, later LED work was isolated from that code.
 
-**Rule:** separate “recovered successfully” from “did not happen.” Preserve the event and improve diagnostics rather than hiding it behind a pass/fail label.
+**Rule:** do not reopen a qualified subsystem without evidence of a regression.
+
+## 7. A recovered stall is still evidence
+
+A 119.3 ms USB write did not produce a logged underrun because catch-up worked.
+
+**Rule:** separate “recovered successfully” from “did not happen.”
+
+## 8. Preserve provenance without pretending it is portable
+
+The exact v8.1.3 service scripts contain local paths/identifiers and two status-helper version mistakes.
+
+**Rule:** keep exact qualification artifacts when they matter, but do not publish them as a generic installer. A cleaned portable package is a new test item.

@@ -1,64 +1,73 @@
 # Current mapping specification
 
 **Checkpoint:** 9 October 2026  
-**Authoritative mapping artifacts:** five mapping-only Controller Manager exports; see `checksums/MAPPING_ONLY_SHA256SUMS.txt`
+**Authoritative artifacts:** five mapping-only Controller Manager exports; see `checksums/MAPPING_ONLY_SHA256SUMS.txt`
 
-The exact TSI is source truth. This file is the human-readable behavior specification.
+The five exported mapping files are source truth. This document is the human-readable behavior specification.
 
-## Global
+## Bridge integration
 
-- Bridge In/Out: `Reloop Jockey 3 ME (Bridge)`.
-- `Jockey 3 FX Presets` intentionally absent.
-- Bridge engine **v8.0.4**; service/package **v8.1.3**.
-- v8.0.4 retains the qualified v8.0.2 audio/USB path unchanged.
+All five Reloop devices use:
 
-## A/B actual-Tempo-Master flashing — live-qualified
+`Reloop Jockey 3 ME (Bridge)`
+
+for input/output in the qualified setup.
+
+### A/B actual-Tempo-Master flashing
 
 Deck A:
+
 - Tempo Master IN `2293` → `Ch01.Note.A-1`
 - actual-master OUT `2293` → `Ch16.Note.C0`
 - Beat Phase OUT `513` → `Ch01.Note.A-1`
 - Play/Pause IN/OUT `100` → `Ch01.Note.D1`
 
 Deck B:
+
 - Tempo Master IN `2293` → `Ch02.Note.A-1`
 - actual-master OUT `2293` → `Ch16.Note.C#0`
 - Beat Phase OUT `513` → `Ch02.Note.A-1`
 - Play/Pause IN/OUT `100` → `Ch02.Note.D1`
 
 Bridge behavior:
+
 - only the actual Tempo Master deck's trash LED flashes;
 - the same Beat Phase is mirrored to that deck's Play/Pause LED;
 - ordinary Play/Pause LED output is suppressed only while that deck is master;
 - cached ordinary Play/Pause state is restored when it ceases to be master;
-- non-master Play/Pause LED behavior remains normal;
 - AUTO/Cruise master changes follow actual Traktor state.
 
-## Stereo Master Output ring meters
+## Project workflow choices
+
+The following are part of the qualified mapping, but are not requirements of the audio bridge.
+
+### Stereo Master Output ring meters
 
 Deck A:
+
 - FX Select 3 ring → **Master Output Left**
 - OUT command `2694` → `Ch01.Note.G#1`
 
 Deck B:
+
 - FX Select Advanced ring → **Master Output Right**
 - OUT command `2695` → `Ch02.Note.F1`
-- two old command `365` OUT records remain present but unbound; preserve them unless intentionally cleaning the file.
+- two command `365` OUT records remain unbound in the qualified Deck B export.
 
-## Deck A
+### Deck A
 
 - Tempo Adjust `Ch01.PitchBend`: Invert OFF; physical up = faster.
-- Custom four-band EQ retained.
+- Custom four-band EQ.
 - PAN → Gain.
 - Browser/view/load controls retained.
 - FX1 → previous Favorite.
 - FX2 → next Favorite.
 - FX Select Advanced press `Ch01.Note.F1` → Recorder Record/Stop `2056`, Toggle.
 
-## Deck B
+### Deck B
 
 - Tempo Adjust `Ch02.PitchBend`: Invert OFF; physical up = faster.
-- Custom four-band EQ retained.
+- Custom four-band EQ.
 - PAN → Gain.
 - FX Select 3 turn → browse.
 - FX Select 3 press → Browser view.
@@ -68,7 +77,7 @@ Deck B:
 - FX Select 1 press → no Recorder input.
 - XFA–XFD intentionally unused.
 
-## Deck C / Sample C
+### Deck C / Sample C
 
 - Physical GAIN/HIGH/MID/LOW disabled.
 - PAN → Gain.
@@ -76,7 +85,7 @@ Deck B:
 - FX2 → next Favorite.
 - Remaining Remix functions preserved.
 
-## Deck D / Sample D
+### Deck D / Sample D
 
 - Physical GAIN/HIGH/MID/LOW disabled.
 - PAN → Gain.
@@ -89,7 +98,7 @@ Deck B:
 - FX1/FX2 → Layout/View cycle.
 - FX B3 `Ch04.Note.E-1` → Unload entire Deck D, no modifiers.
 
-## Current mapping counts
+## Qualified mapping counts
 
 - Deck A: **143 commands / 143 bindings**
 - Deck B: **142 / 140**

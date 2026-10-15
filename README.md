@@ -1,94 +1,94 @@
 # Reloop Jockey 3 ME macOS Bridge
 
-A reverse-engineered macOS audio + bidirectional MIDI bridge and custom Traktor mapping for the **Reloop Jockey 3 ME**.
+A reverse-engineered macOS audio + bidirectional MIDI bridge for the **Reloop Jockey 3 ME**, with qualified Traktor Controller Manager mappings.
 
-The project exists because the controller's original macOS driver path is no longer a practical fit for the Apple-Silicon setup used here. The bridge talks directly to the controller over USB, exposes a CoreMIDI endpoint to Traktor, and routes Traktor audio through BlackHole to the Jockey 3 ME at 48 kHz.
+The bridge talks directly to the controller over USB, exposes a CoreMIDI endpoint to Traktor, and routes Traktor audio through BlackHole to the Jockey 3 ME at 48 kHz.
 
 ## Current qualified baseline
 
 | Component | Qualified version |
 |---|---|
 | Bridge engine | **v8.0.4** |
-| Service/package | **v8.1.3** |
+| Service/package used for qualification | **v8.1.3** |
 | Audio/USB foundation | **v8.0.2-qualified path, unchanged in v8.0.4** |
 | Traktor mapping | **Five mapping-only Controller Manager exports** |
 | Mapping checksums | `checksums/MAPPING_ONLY_SHA256SUMS.txt` |
 | Tested OS | **macOS Sonoma 14.8.9, Apple Silicon** |
 | Controller firmware observed | **1.0.6** |
 
-This baseline was live-tested with the actual controller. The v8.0.4 change adds actual-Tempo-Master Play/Pause LED flashing while keeping the previously qualified audio/USB path unchanged.
+The physical controller was live-tested on this baseline. Qualification is intentionally limited to the environment above.
 
-## What it does
+## What the bridge does
 
-- 48 kHz audio output to the Reloop Jockey 3 ME.
-- Traktor Master L/R via BlackHole channels 1/2.
-- Traktor Monitor L/R via BlackHole channels 4/3.
-- Bidirectional CoreMIDI endpoint: `Reloop Jockey 3 ME (Bridge)`.
-- Actual Tempo Master tracking for Deck A/B.
-- Beat-phase flashing on the actual master's trash LED.
-- Matching Beat-phase flashing on the actual master's Play/Pause LED.
-- Normal Play/Pause LED behavior retained on the non-master deck.
-- Cached Play/Pause LED state restored when master status moves away.
-- Custom Traktor mapping for the owner's A/B/C/D workflow.
+- Sends 48 kHz audio to the Reloop Jockey 3 ME.
+- Routes Traktor Master L/R from BlackHole channels 1/2.
+- Routes Traktor Monitor L/R from BlackHole channels 4/3.
+- Exposes `Reloop Jockey 3 ME (Bridge)` as a bidirectional CoreMIDI endpoint.
+- Tracks the actual Tempo Master for Deck A/B.
+- Flashes the actual master's trash LED with Beat Phase.
+- Mirrors that Beat Phase to the actual master's Play/Pause LED.
+- Restores normal Play/Pause LED state when master status moves away.
+
+## Mapping scope
+
+The five files under `mapping/` are **mapping-only exports**. They do not contain global Traktor preferences, audio settings, playlists, personal paths, or unrelated controllers.
+
+They do include the qualified project's workflow choices, such as Favorites browsing, Recorder/Cruise assignments and Deck C/D behavior. Those choices are **not required for the audio bridge itself** and should be treated as a qualified example configuration rather than a universal default.
+
+See `docs/CURRENT_MAPPING_SPEC.md` and `docs/TRAKTOR_SETUP.md`.
 
 ## Repository layout
 
 ```text
 src/        exact qualified Objective-C bridge source
-service/    launchd installer, status and uninstall scripts
+service/    exact service scripts used for the private v8.1.3 qualification
 mapping/    five qualified mapping-only Controller Manager exports
 patches/    source-level bridge diffs
-dist/       release/download notes; binary ZIPs live in GitHub Releases
+dist/       distribution status and artifact notes
 tools/      mapping audit tooling
-docs/       architecture, qualification and mapping documentation
+docs/       architecture, setup, qualification and engineering documentation
 checksums/  SHA-256 records for qualified artifacts
 ```
 
-## Qualified Traktor mappings
+## Installation status
 
-The repository contains five mapping-only Controller Manager exports: Deck A, Deck B, Mixer, Sample C and Sample D.
+There is **not yet a general-purpose public installer**.
 
-A full Traktor settings export is intentionally **not** stored here. Personal/global Traktor preferences, audio settings, paths, playlists and unrelated controller mappings are excluded.
+The scripts under `service/` are preserved because they are the exact service wrapper used during qualification. They contain local-project assumptions and are not suitable as a reusable installer without modification and another qualification pass.
 
-Exact per-file SHA-256 values are recorded in `checksums/MAPPING_ONLY_SHA256SUMS.txt`.
+For source build and controlled manual testing, see `docs/BUILD.md`, `docs/INSTALLATION.md` and `docs/TESTING.md`.
 
 ## Distribution strategy
 
-Source, scripts, mapping files, checksums and reproducible documentation belong in Git history. Downloadable installation ZIPs belong in **GitHub Releases**, so replacing a binary build does not permanently grow the repository history.
+Source, mapping files, documentation and checksums belong in Git history. Downloadable installation packages should be GitHub Release assets rather than accumulated binary ZIPs in Git history.
 
-The qualified v8.1.3 installer ZIP has SHA-256:
+The exact v8.1.3 qualification ZIP has SHA-256:
 
 `5255a15b3f9062b6df068daa0f118079306e8e6a5e3ac6e408612bac074aa908`
 
-The Release asset will be added after the public-readiness audit.
+That ZIP is **not being published as the general public installer** because its service wrapper contains machine/project-specific assumptions. A portable package must be separately tested before release.
 
 ## Qualification evidence
 
-A later near-four-hour v8.0.4/v8.1.3 session recorded:
+A near-four-hour v8.0.4/v8.1.3 session recorded:
 
 - **0 BlackHole frames dropped**;
 - **0 playback underrun frames**;
 - one recovered **119.3 ms USB write stall**;
-- the recovery/catch-up mechanism completed without a software-path underrun.
+- recovery without a software-path underrun.
 
-A separate full scan of the Traktor-recorded master WAVs found **0 high-confidence digital glitches** and no detected fault around the estimated time of that USB stall. This does **not** prove the downstream USB/DAC/analog output was glitch-free; it only strengthens the evidence that Traktor's recorded master remained clean.
+A separate scan of the Traktor-recorded master WAVs found **0 high-confidence digital glitches** and no detected fault around the estimated USB-stall time. Because the recording point is upstream of USB/DAC/analog output, this does not prove the analog output was glitch-free.
 
-See [`docs/QUALIFICATION.md`](docs/QUALIFICATION.md) and [`docs/KNOWN_LIMITATIONS.md`](docs/KNOWN_LIMITATIONS.md).
+See `docs/QUALIFICATION.md` and `docs/KNOWN_LIMITATIONS.md`.
 
-## Engineering approach
+## Engineering rules
 
-This project deliberately separates:
+This project separates structural validation, runtime evidence and live hardware qualification. A build or mapping is not called qualified merely because it compiles or parses.
 
-1. structural/source validation;
-2. software runtime evidence;
-3. live hardware qualification.
+`main` is reserved for qualified baselines plus documentation about those baselines. Experimental bridge changes belong on separate branches and are promoted only after live testing.
 
-A mapping or bridge change is not considered qualified merely because it compiles or passes a binary audit. Live controller behavior is the final acceptance test.
+## Public-readiness status
 
-The project history also records failed approaches and why they failed. Those failures materially changed the working method: physical controls are not inferred from MIDI addresses when live evidence exists, unrelated Traktor rows are not cloned without auditing modifiers and interaction semantics, and the current mapping-only Controller Manager exports outrank generated predecessors.
+The repository remains private while the public-readiness checklist is completed. See `docs/PUBLIC_READINESS.md`.
 
-## Status
-
-`main` is reserved for qualified baselines. Experimental diagnostics and future changes should be developed on separate branches and promoted only after live testing.
-
-The repository is being organized privately first. A license will be chosen before making it public.
+No license has been added yet.

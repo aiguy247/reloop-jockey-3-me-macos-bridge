@@ -4,5 +4,5 @@
 # Mapping-only Controller Manager exports
 # Exact per-file hashes are in checksums/MAPPING_ONLY_SHA256SUMS.txt
 
-# GitHub Release asset (not committed to Git history)
+# Private v8.1.3 qualification ZIP (not committed; not the general public installer)
 5255a15b3f9062b6df068daa0f118079306e8e6a5e3ac6e408612bac074aa908  Reloop_Controller_Bridge_v8_1_3.zip
