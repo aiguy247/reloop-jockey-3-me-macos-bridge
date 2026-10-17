@@ -50,11 +50,11 @@ docs/       architecture, setup, qualification and engineering documentation
 checksums/  SHA-256 records for qualified artifacts
 ```
 
-## Installation status
+## Installation scope
 
-There is **not yet a general-purpose public installer**.
+This repository is being published as **source + mappings + engineering documentation**, not as a general-purpose installer.
 
-The scripts under `service/` are preserved because they are the exact service wrapper used during qualification. They contain local-project assumptions and are not suitable as a reusable installer without modification and another qualification pass.
+The scripts under `service/` are preserved because they are the exact service wrapper used during qualification. They contain local-project assumptions and are not presented as a reusable public installer.
 
 For source build and controlled manual testing, see `docs/BUILD.md`, `docs/INSTALLATION.md` and `docs/TESTING.md`.
 
@@ -66,7 +66,7 @@ The exact v8.1.3 qualification ZIP has SHA-256:
 
 `5255a15b3f9062b6df068daa0f118079306e8e6a5e3ac6e408612bac074aa908`
 
-That ZIP is **not being published as the general public installer** because its service wrapper contains machine/project-specific assumptions. A portable package must be separately tested before release.
+That ZIP is **not being published as a general public installer** because its service wrapper contains machine/project-specific assumptions. No public installer package is currently planned.
 
 ## Qualification evidence
 
