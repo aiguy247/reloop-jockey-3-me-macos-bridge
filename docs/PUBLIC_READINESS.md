@@ -1,8 +1,6 @@
 # Public-readiness audit
 
-Status: **not ready to make public yet**.
-
-The source/mapping baseline is in good shape, but three publication gates remain.
+Status: **audit complete; repository remains private pending explicit owner approval for a visibility change**.
 
 ## Current-tree audit
 
@@ -25,11 +23,11 @@ Results:
 
 ## Reachable Git history
 
-The reachable `main` history is short and currently contains only the project-establishment/documentation commits plus the sanitized qualified baseline.
+The reachable `main` and `v8.1.3` history exposes the sanitized qualified baseline with the five mapping-only Controller Manager exports.
 
-The former full Traktor settings commit was removed from branch/tag history. However, GitHub can still retrieve that old unreachable object by its exact SHA while it remains in object storage.
+The former full Traktor settings commit was removed from normal branch/tag history. An old unreachable Git object may still be retrievable only if its exact SHA is already known. The owner has accepted that residual exposure; it is not a publication blocker.
 
-**Gate:** do not make the repository public until that old object is no longer retrievable, or GitHub confirms it has been purged.
+The public-facing repository must not link to or advertise that old object.
 
 ## Service/package portability
 
@@ -47,9 +45,9 @@ This is **not a repository-publication blocker** because no general installer or
 
 ## Mapping portability
 
-The five files under `mapping/` are safe mapping-only exports, not full Traktor settings.
+The five files under `mapping/` are mapping-only exports, not full Traktor settings.
 
-They still include project workflow preferences. The bridge-specific integration and the optional workflow customizations are now distinguished in the documentation.
+They still include project workflow preferences. The bridge-specific integration and the optional workflow customizations are distinguished in the documentation.
 
 This is not a publication blocker, but public users should not be told the entire mapping is required for the bridge.
 
@@ -77,12 +75,15 @@ The project is independent and unaffiliated with Reloop, Native Instruments or t
 
 ## Publication checklist
 
-Before changing repository visibility:
+Completed:
 
-- old full-settings Git object no longer retrievable;
 - author identity confirmed as Guy R. Hood;
 - MIT license added;
-- repository clearly published as source + mappings only; no general installer/Release ZIP published;
-- final secret/privacy scan;
-- final README/install smoke review;
-- optional GitHub Release contains only the separately qualified portable package.
+- repository scope clearly documented as source + mappings + engineering documentation;
+- no general public installer or Release ZIP planned;
+- final secret/privacy review completed on 17 Oct 2026;
+- final README/install documentation smoke review completed on 17 Oct 2026.
+
+Remaining gate:
+
+- explicit owner approval before changing repository visibility.
