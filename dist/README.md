@@ -16,4 +16,4 @@ This ZIP is retained outside Git as qualification provenance.
 
 It should **not** be published as the general public installer because its service wrapper contains local project assumptions. See `service/README.md`.
 
-A future portable package should be attached to a GitHub Release only after its own qualification.
+No public installer package is currently planned. If that changes later, any new portable package must receive its own qualification before release.
