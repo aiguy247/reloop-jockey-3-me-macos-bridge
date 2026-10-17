@@ -89,6 +89,6 @@ This project separates structural validation, runtime evidence and live hardware
 
 ## Public-readiness status
 
-The repository remains private while the public-readiness checklist is completed. See `docs/PUBLIC_READINESS.md`.
+The public-readiness audit is complete. The repository remains private until the owner explicitly approves changing repository visibility. See `docs/PUBLIC_READINESS.md`.
 
 Licensed under the **MIT License**. See `LICENSE`.
