@@ -43,7 +43,7 @@ Known local assumptions include:
 - status helper matching a v8.0.3 process name while reporting v8.0.4;
 - status helper tailing a v8.1.2 log while reporting v8.1.3.
 
-**Gate:** a portable wrapper/package must be created and live-tested before publishing a general installer or Release ZIP.
+This is **not a repository-publication blocker** because no general installer or Release ZIP is planned. The rule is simply: do not publish the historical v8.1.3 package as a reusable installer.
 
 ## Mapping portability
 
@@ -82,7 +82,7 @@ Before changing repository visibility:
 - old full-settings Git object no longer retrievable;
 - author identity confirmed as Guy R. Hood;
 - MIT license added;
-- portable installer/service package built and live-qualified, or repository clearly published as source-only with no general installer;
+- repository clearly published as source + mappings only; no general installer/Release ZIP published;
 - final secret/privacy scan;
 - final README/install smoke review;
 - optional GitHub Release contains only the separately qualified portable package.
