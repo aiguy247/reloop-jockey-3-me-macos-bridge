@@ -222,3 +222,46 @@ The post-test system snapshot showed macOS 14.8.9 on AC power, no recorded therm
 The Reloop remained enumerated as USB High Speed (480 Mb/s) through the Genesys Logic USB 2.1 hub function.
 
 Interpretation after this run: the Hama setup can reproduce the same class of simultaneous playback/capture USB delay seen previously. The event occurred while BlackHole continued callback activity and while active pre-USB PCM was present. This makes a source-audio starvation explanation less likely, but it does not yet distinguish among hub behavior, host-controller/USB-stack scheduling, controller behavior, or another shared USB-path cause.
+
+
+### UGREEN USB 2.0 stress run — v8.0.7
+
+Run label: `ugreen-usb2-stress-1`.
+
+The user stopped this run early because repeated audible pops and short sound cutouts were heard through the controller headphones. VLC had not yet been started. Traktor Mix Recorder was running during this test, which was not true of the preceding Hama stress run; this is therefore an important workload confound for direct hub-only attribution.
+
+Approximate duration: 1484 seconds (24 minutes 44 seconds).
+
+Playback slow-transfer events:
+
+- T+723.869 s: 116.544 ms playback write and 116.753 ms capture read;
+- T+1320.291 s: 122.052 ms playback write and 116.500 ms capture read;
+- T+1321.825 s: 25.108 ms playback write and 25.424 ms capture read;
+- T+1321.926 s: 101.211 ms playback write and 101.372 ms capture read;
+- T+1382.121 s: 122.308 ms playback write and 114.481 ms capture read.
+
+All transfers completed successfully. No USB timeout, other error, or partial transfer was reported. Four playback events exceeded 50 ms; five exceeded 20 ms. The events at approximately 22:00–22:02 form a tight cluster, followed by another >120 ms event approximately one minute later.
+
+End-of-run totals:
+
+- playback completion max gap: 122.317 ms;
+- playback operational >20 ms events: 5;
+- playback operational >50 ms events: 4;
+- capture operational >20 ms events: 6;
+- capture operational >50 ms events: 5, including startup;
+- clock catch-up events: 2;
+- catch-up active seconds: 175;
+- BlackHole frames dropped: 0;
+- playback underrun frames: 0;
+- BlackHole callback maximum gap: 11.846 ms;
+- maximum source ring depth: 13008 frames (271.0 ms);
+- final source ring depth: 1056 frames (22.0 ms);
+- diagnostic/PCM queue drops: 0.
+
+Four automatic ten-second pre-USB PCM snapshots were saved for the >50 ms playback stalls and each reported all 480000 frames nonzero. Offline waveform analysis is still required before making continuity claims for those four source windows.
+
+The UGREEN USB 2.0 path enumerated the Reloop at USB High Speed (480 Mb/s) behind a Genesys Logic USB 2.0 hub function with VID:PID 05e3:0608, version 60.70. The preceding Hama path used a different Genesys Logic USB 2.1 hub function, VID:PID 05e3:0610, version 6.56. This is a verified topology difference, not evidence by itself that the hub implementation caused the stalls.
+
+Post-test state showed AC power, no recorded thermal/performance warning, 32% system-wide memory free, and approximately 89 GiB root-filesystem free.
+
+Interpretation after this run: under this stress workload, UGREEN USB 2.0 produced substantially more shared playback/capture USB delays than the preceding Hama stress run and the user heard audible pops/cutouts. However, Traktor recording was an extra workload variable, so the current evidence is strong enough to reject UGREEN USB 2.0 as the preferred setup for now, but not sufficient to quantify a pure hub-only causal effect. A same-workload UGREEN USB 3.0-port test and a Hama run with Traktor recording enabled are the next useful comparisons.
