@@ -76,7 +76,10 @@ main() {
   echo "Control-C stops the candidate. The qualified v8.1.3 service will then be restored if it was loaded before this test."
   echo
 
-  "$ENGINE" 2>&1 | /usr/bin/tee "$RUN_LOG"
+  "$ENGINE" 2>&1 | (
+    trap '' INT
+    /usr/bin/tee "$RUN_LOG"
+  )
   CANDIDATE_STATUS="${PIPESTATUS[0]}"
 
   restore_legacy
