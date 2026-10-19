@@ -428,3 +428,46 @@ Result:
 - built binary SHA-256: `66355176b2bc4193e4a749c72a56ab48771b71ed91d1cb8f638fd924961618a4`.
 
 This satisfies the compile/build gate only. It does not qualify v8.0.8 behavior on hardware.
+
+
+### v8.0.8 Hama functional test — PASS with recovery path unexercised
+
+Run label: `hama-v808-functional-1`.
+
+User observation:
+
+- normal DJ/controller operation was good;
+- the newly added Deck A/B RELOOP-button Low Kill mappings and LEDs worked perfectly;
+- there may have been a small amount of crackling near the beginning, but the user was not certain;
+- after DJing for several minutes, heavy window/Spaces switching near the end did not produce audible crackling that the user noticed.
+
+Run duration was approximately 390 seconds.
+
+Transport summary:
+
+- playback transfers: 234,422; errors 0;
+- capture transfers: 293,026; errors 0;
+- BlackHole accepted 18,755,072 frames, dropped 0;
+- playback underrun frames: 0;
+- BlackHole callback max gap: 11.576 ms; no >20 ms callbacks;
+- playback completion max gap: 3.020 ms; no >4/6/8/10/50 ms completion gaps;
+- synchronous playback write max: 7.509 ms, occurring at startup; only one write exceeded 4 ms and 6 ms; none exceeded 8/10/20/50 ms;
+- synchronous capture max: 85.999 ms at startup; no capture timeouts or other errors;
+- CoreMIDI OUT dropped 0;
+- no clock catch-up event;
+- v8.0.8 synchronous warm recovery requests/successes/failures: 0/0/0;
+- candidate stopped cleanly and the qualified v8.1.3 service was restored.
+
+The added 6 ms diagnostics therefore found no non-startup playback transport disturbance during this run, including the user's later heavy window/Spaces switching. If any early audible crackle occurred, this log does not establish a matching non-startup >6 ms playback write.
+
+The macOS unified USB log captured repeated endpoint 0x83 timeout completions during the run. The bridge independently counted 381 MIDI-drain timeouts with zero other MIDI completion errors, while playback/capture reported zero timeouts and zero errors. These endpoint-0x83 events are therefore treated as the bridge's expected MIDI receive timeout/poll behavior, not evidence of the audio-path failure class.
+
+Post-test snapshot:
+
+- AC power;
+- no recorded thermal or performance warning;
+- 82% system-wide memory free;
+- zero swap-in/out;
+- Hama topology remained Genesys Logic USB2.1 hub VID:PID 05e3:0610 version 6.56, with the Reloop at 480 Mb/s.
+
+Qualification interpretation: v8.0.8 passes the short functional/hardware smoke test. Its new bounded warm-recovery mechanism remains **unqualified**, because this run did not reproduce a zero-byte playback failure and therefore never exercised recovery.
