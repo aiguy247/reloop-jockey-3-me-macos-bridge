@@ -203,7 +203,7 @@ One operational shared USB stall occurred at T+1043.506 s:
 - catch-up recovery ran for 41 seconds at a maximum temporary correction of 3000 ppm;
 - no playback timeout, USB error or partial transfer occurred.
 
-The automatic pre-USB PCM snapshot for this event contained active audio across all 480000 frames. Absolute peaks were 0.902928 / 0.937344 / 0.937344 / 0.902928. This verifies that the source PCM capture path contained active Traktor audio around the stall. The WAV still needs waveform/discontinuity analysis before describing the source PCM as glitch-free.
+The automatic pre-USB PCM snapshot for this event contained active audio across all 480000 frames. Absolute peaks were 0.902928 / 0.937344 / 0.937344 / 0.902928. Offline waveform analysis of the uploaded ten-second Float32 WAV found no zero/silence gap, clipping, NaN/Inf samples, repeated adjacent frames, or abnormal sample transition at the event center. The center frame-to-frame maximum absolute delta was 0.013289, approximately the 50th percentile of all frame-to-frame deltas in the capture; the largest delta anywhere in the file was 0.527098. This supports source-PCM continuity across the stall position. It does not prove wall-clock continuity after USB submission, controller DAC continuity, or analog-output continuity.
 
 End-of-run totals:
 
