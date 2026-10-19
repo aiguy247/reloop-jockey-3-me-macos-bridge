@@ -26,6 +26,15 @@ main() {
     echo "== power source =="
     /usr/bin/pmset -g batt 2>&1 || true
     echo
+    echo "== thermal state =="
+    /usr/bin/pmset -g therm 2>&1 || true
+    echo
+    echo "== memory pressure =="
+    /usr/bin/memory_pressure 2>&1 || true
+    echo
+    echo "== root filesystem free space =="
+    /bin/df -h / 2>&1 || true
+    echo
     echo "== qualified service state =="
     /bin/launchctl print "gui/$(/usr/bin/id -u)/com.guy.reloopbridge" 2>&1 | \
       /usr/bin/grep -E 'state =|pid =|last exit code' || true
@@ -41,7 +50,7 @@ main() {
     fi
   } > "$OUT/environment.txt"
 
-  /usr/sbin/system_profiler SPHardwareDataType SPUSBDataType SPThunderboltDataType SPAudioDataType \
+  /usr/sbin/system_profiler SPHardwareDataType SPPowerDataType SPUSBDataType SPThunderboltDataType SPAudioDataType \
     > "$OUT/system_profiler.txt" 2>&1 || true
   /usr/sbin/ioreg -p IOUSB -l -w 0 > "$OUT/ioreg_usb.txt" 2>&1 || true
   /usr/sbin/ioreg -p IOService -n 'Reloop Jockey 3 ME' -r -l \
