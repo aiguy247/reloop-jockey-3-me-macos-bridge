@@ -53,7 +53,7 @@ main() {
     echo "Stopping qualified v8.1.3 service for the foreground candidate test..."
     /bin/launchctl bootout "gui/$UID_NUM" "$LEGACY_PLIST" || return 1
     /bin/sleep 1
-    if /bin/launchctl print "gui/$UID_NUL/$LEGACY_LABEL" >/dev/null 2>&1; then
+    if /bin/launchctl print "gui/$UID_NUM/$LEGACY_LABEL" >/dev/null 2>&1; then
       echo "ERROR: Qualified service is still loaded. Candidate was not started."
       return 1
     fi
