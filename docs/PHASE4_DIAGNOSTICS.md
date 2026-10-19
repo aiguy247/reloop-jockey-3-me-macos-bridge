@@ -265,3 +265,18 @@ The UGREEN USB 2.0 path enumerated the Reloop at USB High Speed (480 Mb/s) behin
 Post-test state showed AC power, no recorded thermal/performance warning, 32% system-wide memory free, and approximately 89 GiB root-filesystem free.
 
 Interpretation after this run: under this stress workload, UGREEN USB 2.0 produced substantially more shared playback/capture USB delays than the preceding Hama stress run and the user heard audible pops/cutouts. However, Traktor recording was an extra workload variable, so the current evidence is strong enough to reject UGREEN USB 2.0 as the preferred setup for now, but not sufficient to quantify a pure hub-only causal effect. A same-workload UGREEN USB 3.0-port test and a Hama run with Traktor recording enabled are the next useful comparisons.
+
+
+### Traktor recording analysis from UGREEN USB 2.0 stress run
+
+The user recorded a 20:17.877 stereo 48 kHz / 16-bit WAV in Traktor during the UGREEN USB 2.0 stress run. A local native-C analyzer scanned the full 233,832,492-byte file.
+
+Global findings:
+
+- peak absolute sample: 0.999969482;
+- samples at or above full scale: 0;
+- a 139.016-second exact-zero/repeated-frame run begins at recording time 17:58.861 and continues to the end of the file; this is a long silent tail and must not be treated as evidence of the earlier USB stalls;
+- the largest 50 adjacent-frame jumps did not cluster around the approximate recording-relative times of the logged USB-stall events;
+- the heuristic 10 ms RMS-drop list contains many musical-content candidates and is not by itself proof of digital dropouts.
+
+Approximate time alignment, using the recording filename time (18:10:07) and the bridge run ending near 18:28:14 at T+1484, places the logged playback USB events roughly at recording times 5:27, 15:23–15:25, and 16:25. No top-50 sample discontinuity is reported at those approximate positions. Because the recording start and bridge monotonic clock were not explicitly synchronized and the Traktor recorder source mode was not independently captured, this is supporting evidence only, not final proof that Traktor's recorded source path was clean at every audible pop.
