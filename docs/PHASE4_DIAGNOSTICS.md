@@ -133,3 +133,51 @@ First controlled comparison after the candidate passes a smoke test:
 4. Controlled hub A/B evidence is collected.
 5. Long-run test passes on the selected setup.
 6. Only then consider promotion. `main` is not changed merely because the candidate compiles or runs.
+
+
+## Phase 4 evidence collected on 19 October 2026
+
+### Hama loaded-desktop run — v8.0.6
+
+Observed user workload included Traktor plus multiple Chrome windows, ChatGPT, BBEdit, Notes, ExpressVPN open but disconnected, and two Terminal windows. This is therefore a loaded-desktop stress condition, not the controlled hub-comparison baseline.
+
+Run duration was approximately 21 minutes 58 seconds. One operational shared USB stall occurred at T+150.881 s:
+
+- playback synchronous write: 113.132 ms, 4096 bytes, success;
+- capture synchronous read: 113.267 ms, 4096 bytes, success;
+- BlackHole callback age at playback completion: 6.188 ms;
+- playback/capture both recovered;
+- BlackHole drops: 0;
+- playback underrun frames: 0;
+- user reported no audible or controller problem during the session.
+
+A ten-second PCM diagnostic file was saved for that event, but every sample in all four channels was zero. That capture therefore cannot establish PCM integrity for active music at the stall. It is retained as evidence of silence at the pre-USB capture point around that event, not as proof of a broken capture mechanism.
+
+Live USB topology showed the Reloop enumerating at 480 Mb/s USB High Speed behind a Genesys Logic USB 2.1 hub function. This does not identify the exact retail Hama model and does not by itself establish the cause of the stall.
+
+### Hama PCM-verification run — v8.0.7
+
+v8.0.7 adds only diagnostic verification on top of v8.0.6:
+
+- SIGUSR1 can request one manual five-second-pre / five-second-post PCM snapshot;
+- the snapshot metadata and console report nonzero-frame count and per-channel absolute peaks;
+- previous PCM files are archived before a new run;
+- Control-C logging preserves the engine shutdown summary;
+- environment snapshots include additional power, thermal and memory-pressure evidence.
+
+During a short music-playing verification run:
+
+- manual snapshot: 480000 / 480000 frames nonzero;
+- channel absolute peaks: 0.822040 / 0.788429 / 0.788429 / 0.822040;
+- playback max synchronous write: 3.110 ms;
+- playback completion max gap: 3.143 ms;
+- BlackHole callback max gap: 10.965 ms;
+- BlackHole frames dropped: 0;
+- playback underrun frames: 0;
+- playback USB errors/timeouts/partial transfers: 0;
+- one startup capture read reached 82.483 ms and completed successfully;
+- queue-heartbeat probes reached approximately 84 ms while actual playback remained normal.
+
+This verifies that the pre-USB PCM capture path works with active Traktor audio. Therefore the all-zero v8.0.6 event file should be treated as an all-silent source window at that capture point, not as evidence that the PCM logger is generally broken.
+
+The queue-heartbeat probes are GCD timers on the IOUSBHost interface service queues and the recovery queue. Their latency can increase independently of the dedicated real-time playback/capture threads. A large queue-probe gap alone is therefore not equivalent to a USB audio-transfer stall.
