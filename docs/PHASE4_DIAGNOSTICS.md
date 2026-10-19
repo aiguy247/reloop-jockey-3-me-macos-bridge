@@ -315,3 +315,35 @@ The Reloop remained USB High Speed / 480 Mb/s and system_profiler showed it behi
 Post-test system state showed AC power, no recorded thermal/performance warning, 34% system-wide memory free, and approximately 91 GiB root-filesystem free.
 
 Interpretation: the UGREEN USB 3.0 physical-port test reproduces the same shared playback/capture blocking pattern and does not provide evidence that this physical socket is materially better for the Reloop. The user's desktop-swipe observation creates a useful repeatable stress action for immediate A/B testing against the Hama without changing the rest of the workload.
+
+
+### Hama Spaces-swipe stress run — v8.0.7
+
+Run label: `hama-swipe-stress-1`.
+
+The user stopped the run after approximately 151 seconds after audible popping began while DJing and repeatedly switching macOS Spaces/desktops with three-finger swipes. The user reported the Hama subjectively seemed less severe than the UGREEN runs, but was not clean. The Mac fan was audibly active/hot by this point in the work session.
+
+Logged transport evidence:
+
+- startup capture read: 83.727 ms;
+- T+3.763 s playback write: 114.988 ms, success;
+- T+3.763 s capture read: 115.111 ms, success;
+- BlackHole age at the shared event: approximately 7.4–7.5 ms;
+- playback operational >20 ms events: 1;
+- playback operational >50 ms events: 1;
+- capture operational >20 ms events: 2 including startup;
+- capture operational >50 ms events: 2 including startup;
+- playback USB timeouts/errors/partial transfers: 0;
+- BlackHole frames dropped: 0;
+- playback underrun frames: 0;
+- BlackHole callback max gap: 11.879 ms;
+- maximum ring depth: 8160 frames (170.0 ms);
+- queue-probe maxima: if0 65.870 ms, if1 55.915 ms, recovery 53.804 ms.
+
+The shared 115 ms event occurred at T+3.763 s, before the later user-reported Spaces-swipe popping. No additional >20 ms playback write was logged during the remainder of the run despite the later audible pops. Therefore the current >20 ms playback-write diagnostics do not explain every audible pop under Spaces-switching stress.
+
+Post-test state reported 37% system-wide memory free and no recorded macOS thermal or performance warning. This does not support a claim of memory exhaustion or recorded thermal throttling, although it also does not measure instantaneous CPU/GPU/WindowServer saturation and does not contradict the user's report that the fan was running hard.
+
+Topology remained different from UGREEN: Hama exposed a Genesys Logic USB2.1 hub function VID:PID 05e3:0610 version 6.56; the Reloop enumerated at 480 Mb/s. UGREEN exposed 05e3:0608 version 60.70.
+
+Current operational conclusion: Hama remains the preferred hub of the two based on the combined longer-run and user-observed evidence, but it does not eliminate the fault. Spaces switching is now a repeatable stress action worth instrumenting more directly. Hub identity alone is not sufficient to explain all audible popping.
