@@ -57,6 +57,14 @@ main() {
     > "$OUT/ioreg_reloop.txt" 2>&1 || true
   /usr/bin/pmset -g custom > "$OUT/power_settings.txt" 2>&1 || true
 
+  # Non-real-time post/pre snapshot aids for Phase 4 v8.0.8 correlation.
+  # These commands run outside the bridge real-time threads.
+  /bin/ps -axo pid,ppid,%cpu,%mem,etime,comm \
+    > "$OUT/process_snapshot.txt" 2>&1 || true
+  /usr/bin/log show --last 2m --style compact \
+    --predicate '(eventMessage CONTAINS[c] "USB") OR (subsystem CONTAINS[c] "USB")' \
+    > "$OUT/usb_recent_unified_log.txt" 2>&1 || true
+
   echo "PHASE 4 ENVIRONMENT SNAPSHOT SAVED"
   echo "$OUT"
 }
