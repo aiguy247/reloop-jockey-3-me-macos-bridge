@@ -99,7 +99,7 @@ This capture is deliberately **upstream of USB submission**. A clean capture can
 
 ## macOS correlation
 
-For a controlled diagnostic run, `tools/phase4/capture_usb_environment.sh` records the current Mac, power, USB topology, Reloop IORegistry entry, audio devices and service/process state.
+For a controlled diagnostic run, `tools/phase4/capture_usb_environment.sh` records the current Mac, power, USB topology, Reloop IORegistry entry, audio devices and service/process state. The foreground test harness also saves the candidate's complete console output under `~/Library/Logs/ReloopBridge/Phase4Runs` using the supplied run label.
 
 Apple's current Audio System Trace template in Instruments is also useful for selected reproduction runs because it can correlate Core Audio jitter and overloads with thread scheduling, system calls, virtual-memory activity, system load and thermal state:
 
@@ -111,11 +111,11 @@ https://developer.apple.com/documentation/audiotoolbox/understanding-audio-workg
 
 ## Hub A/B testing
 
-Guy's current observation is that the newer Hama hub seems better than the older UGREEN hub. That is an observation to test, not a conclusion about USB 3.2 versus USB 2.0/3.0.
+Guy is currently using a Hama hub through a USB 3.2 Gen 1 connection and reports that it seems better than the previous UGREEN hub. That is an observation to test, not a conclusion about USB 3.2 versus USB 2.0/3.0.
 
-The photographed Hama hub has been identified as **Hama 00200116**, a bus-powered four-port USB 3.2 Gen 1 / 5 Gbit/s hub with a USB-C adapter. The exact UGREEN SKU has not yet been established from the supplied photo.
+The exact Hama and UGREEN hub SKUs/controller silicon have not been verified from the current evidence. Do not infer them from the port labels.
 
-An older USB device negotiates its own USB speed behind a newer hub. A better result on the Hama could instead come from differences in hub controller silicon/firmware, signal integrity, power behavior, cable/topology or host interaction. The test therefore records actual topology and power state rather than treating the printed USB generation as the cause.
+An older USB device negotiates its own supported USB speed behind a newer hub. A better result on the Hama could instead come from differences in hub controller silicon/firmware, signal integrity, power behavior, cable/topology, contention or host interaction. The test therefore records actual topology and power state rather than treating the printed USB generation as the cause.
 
 First controlled comparison after the candidate passes a smoke test:
 
