@@ -790,3 +790,201 @@
 +        __block atomic_uint_fast64_t lastSlowWriteDurationNs;
 +        __block atomic_uint_fast64_t lastSlowWriteCompletionGapNs;
 +        __block atomic_uint_fast64_t lastSlowWriteRingDepthFrames;
++        __block atomic_ulong lastSlowWriteBytes;
++        __block atomic_ulong lastSlowWriteAttempt;
++        __block atomic_bool lastSlowWriteSuccess;
++        __block atomic_uint_fast64_t lastSlowWriteBhCallbackAgeNs;
++        __block atomic_uint_fast64_t lastSlowWriteCaptureSuccessAgeNs;
++        __block atomic_uint_fast64_t lastSlowWriteMidiSuccessAgeNs;
++        __block atomic_uint_fast64_t lastSlowWriteIf0ProbeAgeNs;
++        __block atomic_uint_fast64_t lastSlowWriteIf1ProbeAgeNs;
++        __block atomic_uint_fast64_t lastSlowWriteRecoveryProbeAgeNs;
+         __block atomic_ulong softResyncCount;
+         __block atomic_uint_fast64_t softResyncFramesDiscarded;
+         __block atomic_bool catchupRequested;
+@@ -2927,8 +3630,25 @@
+         __block atomic_ulong capturePending;
+         __block atomic_uint_fast64_t maxCaptureSyncDurationNs;
+         __block atomic_ulong captureSyncOver50ms;
++        __block atomic_ulong captureTimeouts;
++        __block atomic_ulong captureOtherErrors;
++        __block atomic_int captureLastOtherStatus;
++        __block atomic_ulong captureOperationalOver20ms;
++        __block atomic_ulong captureOperationalOver50ms;
++        __block atomic_uint_fast64_t lastSlowCaptureEndNs;
++        __block atomic_uint_fast64_t lastSlowCaptureDurationNs;
++        __block atomic_ulong lastSlowCaptureBytes;
++        __block atomic_bool lastSlowCaptureSuccess;
++        __block atomic_uint_fast64_t lastSlowCapturePlaybackSuccessAgeNs;
++        __block atomic_uint_fast64_t lastSlowCaptureBhCallbackAgeNs;
++        __block atomic_uint_fast64_t lastSlowCaptureMidiSuccessAgeNs;
+         __block atomic_ulong midiDrainTransfers;
+         __block atomic_ulong midiDrainErrors;
++        __block atomic_ulong midiDrainTimeouts;
++        __block atomic_ulong midiDrainOtherErrors;
++        __block atomic_ulong midiQueueFailures;
++        __block atomic_int midiLastOtherStatus;
++        __block atomic_uint_fast64_t midiLastOtherErrorNs;
+         __block atomic_ulong midiPending;
+         __block atomic_uint_fast64_t lastCaptureSuccessNs;
+         __block atomic_uint_fast64_t lastMidiSuccessNs;
+@@ -2971,6 +3691,25 @@
+         atomic_init(&syncWriteOver10ms, 0);
+         atomic_init(&syncWriteOver20ms, 0);
+         atomic_init(&syncWriteOver50ms, 0);
++        atomic_init(&playbackTimeouts, 0);
++        atomic_init(&playbackOtherErrors, 0);
++        atomic_init(&playbackPartialTransfers, 0);
++        atomic_init(&playbackLastOtherStatus, 0);
++        atomic_init(&slowWriteOperationalOver20ms, 0);
++        atomic_init(&slowWriteOperationalOver50ms, 0);
++        atomic_init(&lastSlowWriteEndNs, 0);
++        atomic_init(&lastSlowWriteDurationNs, 0);
++        atomic_init(&lastSlowWriteCompletionGapNs, 0);
++        atomic_init(&lastSlowWriteRingDepthFrames, 0);
++        atomic_init(&lastSlowWriteBytes, 0);
++        atomic_init(&lastSlowWriteAttempt, 0);
++        atomic_init(&lastSlowWriteSuccess, false);
++        atomic_init(&lastSlowWriteBhCallbackAgeNs, 0);
++        atomic_init(&lastSlowWriteCaptureSuccessAgeNs, 0);
++        atomic_init(&lastSlowWriteMidiSuccessAgeNs, 0);
++        atomic_init(&lastSlowWriteIf0ProbeAgeNs, 0);
++        atomic_init(&lastSlowWriteIf1ProbeAgeNs, 0);
++        atomic_init(&lastSlowWriteRecoveryProbeAgeNs, 0);
+         atomic_init(&softResyncCount, 0);
+         atomic_init(&softResyncFramesDiscarded, 0);
+         atomic_init(&catchupRequested, false);
+@@ -2979,8 +3718,25 @@
+         atomic_init(&capturePending, 0);
+         atomic_init(&maxCaptureSyncDurationNs, 0);
+         atomic_init(&captureSyncOver50ms, 0);
++        atomic_init(&captureTimeouts, 0);
++        atomic_init(&captureOtherErrors, 0);
++        atomic_init(&captureLastOtherStatus, 0);
++        atomic_init(&captureOperationalOver20ms, 0);
++        atomic_init(&captureOperationalOver50ms, 0);
++        atomic_init(&lastSlowCaptureEndNs, 0);
++        atomic_init(&lastSlowCaptureDurationNs, 0);
++        atomic_init(&lastSlowCaptureBytes, 0);
++        atomic_init(&lastSlowCaptureSuccess, false);
++        atomic_init(&lastSlowCapturePlaybackSuccessAgeNs, 0);
++        atomic_init(&lastSlowCaptureBhCallbackAgeNs, 0);
++        atomic_init(&lastSlowCaptureMidiSuccessAgeNs, 0);
+         atomic_init(&midiDrainTransfers, 0);
+         atomic_init(&midiDrainErrors, 0);
++        atomic_init(&midiDrainTimeouts, 0);
++        atomic_init(&midiDrainOtherErrors, 0);
++        atomic_init(&midiQueueFailures, 0);
++        atomic_init(&midiLastOtherStatus, 0);
++        atomic_init(&midiLastOtherErrorNs, 0);
+         atomic_init(&midiPending, 0);
+         atomic_init(&lastCaptureSuccessNs, 0);
+         atomic_init(&lastMidiSuccessNs, 0);
+@@ -3007,6 +3763,10 @@
+         atomic_init(&recoveryProbeOver20ms, 0);
+         atomic_init(&recoveryProbeOver50ms, 0);
+ 
++        /* Allocate/touch the static diagnostic PCM pages before RT work. */
++        phase4PcmInit();
++        phase4EventRingsInit();
++
+         MidiOutRing midiOutRing;
+         midiOutRingInit(&midiOutRing);
+ 
+@@ -3257,6 +4017,19 @@
+                         } else if (!atomic_load(&workerStop) &&
+                                    !atomic_load(&suppressResubmit)) {
+                             atomic_fetch_add(&midiDrainErrors, 1);
++                            if (completionStatus == kIOReturnTimeout) {
++                                atomic_fetch_add(&midiDrainTimeouts, 1);
++                            } else {
++                                uint64_t midiErrorNs = monotonicNs();
++                                atomic_store(&midiLastOtherStatus,
++                                             (int)completionStatus);
++                                atomic_store(&midiLastOtherErrorNs,
++                                             midiErrorNs);
++                                phase4MidiErrorPush(midiErrorNs,
++                                                    (int)completionStatus);
++                                /* Counter is retained for summary totals. */
++                                atomic_fetch_add(&midiDrainOtherErrors, 1);
++                            }
+                         }
+ 
+                         if (!atomic_load(&workerStop) &&
+@@ -3272,6 +4045,7 @@
+             if (!queued) {
+                 atomic_fetch_sub(&midiPending, 1);
+                 atomic_fetch_add(&midiDrainErrors, 1);
++                atomic_fetch_add(&midiQueueFailures, 1);
+ 
+                 if (!atomic_load(&workerStop)) {
+                     fprintf(stderr,
+@@ -3566,6 +4340,28 @@
+         atomic_int captureRealtimePolicyResult;
+         atomic_init(&captureRealtimePolicyResult, INT_MIN);
+ 
++        /* Monotonic origin used only to timestamp diagnostic events. */
++        uint64_t diagnosticSessionStartNs = monotonicNs();
++        NSString *phase4PcmDirectoryObject =
++            [NSHomeDirectory() stringByAppendingPathComponent:
++                @"Library/Logs/ReloopBridge/Phase4PCM"];
++        NSError *phase4DirectoryError = nil;
++        BOOL phase4DirectoryReady =
++            [[NSFileManager defaultManager]
++                createDirectoryAtPath:phase4PcmDirectoryObject
++                withIntermediateDirectories:YES
++                attributes:nil
++                error:&phase4DirectoryError];
++        if (!phase4DirectoryReady) {
++            fprintf(stderr,
++                    "WARNING: Phase 4 PCM directory could not be prepared: %s\n",
++                    phase4DirectoryError
++                        ? phase4DirectoryError.localizedDescription.UTF8String
++                        : "unknown error");
++        }
++        const char *phase4PcmDirectory =
++            phase4PcmDirectoryObject.fileSystemRepresentation;
++
+         RealtimeCaptureContext realtimeCaptureContext = {
+             .pipeObject = (__bridge void *)pipe86,
+             .bufferObject = (__bridge void *)(captureBuffers[0]),
+@@ -3576,6 +4372,21 @@
+             .lastCaptureSuccessNs = &lastCaptureSuccessNs,
+             .maxCaptureSyncDurationNs = &maxCaptureSyncDurationNs,
+             .captureSyncOver50ms = &captureSyncOver50ms,
++            .captureTimeouts = &captureTimeouts,
++            .captureOtherErrors = &captureOtherErrors,
++            .captureLastOtherStatus = &captureLastOtherStatus,
++            .captureOperationalOver20ms = &captureOperationalOver20ms,
++            .captureOperationalOver50ms = &captureOperationalOver50ms,
++            .lastSlowCaptureEndNs = &lastSlowCaptureEndNs,
++            .lastSlowCaptureDurationNs = &lastSlowCaptureDurationNs,
++            .lastSlowCaptureBytes = &lastSlowCaptureBytes,
++            .lastSlowCaptureSuccess = &lastSlowCaptureSuccess,
++            .lastSlowCapturePlaybackSuccessAgeNs = &lastSlowCapturePlaybackSuccessAgeNs,
++            .lastSlowCaptureBhCallbackAgeNs = &lastSlowCaptureBhCallbackAgeNs,
++            .lastSlowCaptureMidiSuccessAgeNs = &lastSlowCaptureMidiSuccessAgeNs,
++            .lastPlaybackSuccessNs = &lastPlaybackSuccessNs,
++            .lastMidiSuccessNs = &lastMidiSuccessNs,
++            .ring = ring,
+             .realtimePolicyResult = &captureRealtimePolicyResult
+         };
+ 
+@@ -3716,6 +4527,30 @@
+             .syncWriteOver10ms = &syncWriteOver10ms,
+             .syncWriteOver20ms = &syncWriteOver20ms,
+             .syncWriteOver50ms = &syncWriteOver50ms,
++            .playbackTimeouts = &playbackTimeouts,
++            .playbackOtherErrors = &playbackOtherErrors,
++            .playbackPartialTransfers = &playbackPartialTransfers,
++            .playbackLastOtherStatus = &playbackLastOtherStatus,
++            .slowWriteOperationalOver20ms = &slowWriteOperationalOver20ms,
++            .slowWriteOperationalOver50ms = &slowWriteOperationalOver50ms,
++            .lastSlowWriteEndNs = &lastSlowWriteEndNs,
++            .lastSlowWriteDurationNs = &lastSlowWriteDurationNs,
++            .lastSlowWriteCompletionGapNs = &lastSlowWriteCompletionGapNs,
++            .lastSlowWriteRingDepthFrames = &lastSlowWriteRingDepthFrames,
++            .lastSlowWriteBytes = &lastSlowWriteBytes,
++            .lastSlowWriteAttempt = &lastSlowWriteAttempt,
++            .lastSlowWriteSuccess = &lastSlowWriteSuccess,
++            .lastSlowWriteBhCallbackAgeNs = &lastSlowWriteBhCallbackAgeNs,
