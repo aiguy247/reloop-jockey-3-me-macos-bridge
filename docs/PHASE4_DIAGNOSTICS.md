@@ -181,3 +181,44 @@ During a short music-playing verification run:
 This verifies that the pre-USB PCM capture path works with active Traktor audio. Therefore the all-zero v8.0.6 event file should be treated as an all-silent source window at that capture point, not as evidence that the PCM logger is generally broken.
 
 The queue-heartbeat probes are GCD timers on the IOUSBHost interface service queues and the recovery queue. Their latency can increase independently of the dedicated real-time playback/capture threads. A large queue-probe gap alone is therefore not equivalent to a USB audio-transfer stall.
+
+
+### Hama stress run — v8.0.7
+
+Run label: `hama-stress-1`.
+
+The user did some active DJing at the beginning, changed normal desktop application state during the run, then left the bridge/Traktor running while continuing normal work. This is a stress-condition run, not a controlled DJ-only qualification run.
+
+Duration: approximately 3216 seconds (53 minutes 36 seconds).
+
+One operational shared USB stall occurred at T+1043.506 s:
+
+- playback synchronous write: 123.509 ms;
+- playback completion gap: 123.542 ms;
+- playback transfer: 4096 bytes, success, first attempt;
+- capture synchronous read at the same event time: 116.760 ms;
+- capture transfer: 4096 bytes, success;
+- BlackHole callback age at playback completion: 0.504 ms;
+- source ring depth reached approximately 153 ms;
+- catch-up recovery ran for 41 seconds at a maximum temporary correction of 3000 ppm;
+- no playback timeout, USB error or partial transfer occurred.
+
+The automatic pre-USB PCM snapshot for this event contained active audio across all 480000 frames. Absolute peaks were 0.902928 / 0.937344 / 0.937344 / 0.902928. This verifies that the source PCM capture path contained active Traktor audio around the stall. The WAV still needs waveform/discontinuity analysis before describing the source PCM as glitch-free.
+
+End-of-run totals:
+
+- BlackHole frames dropped: 0;
+- playback underrun frames: 0;
+- playback USB operational >50 ms events: 1;
+- capture operational >50 ms events: 2, including the startup capture event;
+- playback USB errors/timeouts/partial transfers: 0;
+- capture USB timeouts/other errors: 0;
+- diagnostic/PCM queue drops: 0;
+- maximum ring depth: 7344 frames (153.0 ms);
+- final ring depth: 1328 frames (27.7 ms).
+
+The post-test system snapshot showed macOS 14.8.9 on AC power, no recorded thermal/performance warning, 38% system-wide memory free, and approximately 88 GiB free on the root filesystem. These observations do not prove that there was no transient scheduling or memory-pressure event at T+1043.506 s.
+
+The Reloop remained enumerated as USB High Speed (480 Mb/s) through the Genesys Logic USB 2.1 hub function.
+
+Interpretation after this run: the Hama setup can reproduce the same class of simultaneous playback/capture USB delay seen previously. The event occurred while BlackHole continued callback activity and while active pre-USB PCM was present. This makes a source-audio starvation explanation less likely, but it does not yet distinguish among hub behavior, host-controller/USB-stack scheduling, controller behavior, or another shared USB-path cause.
