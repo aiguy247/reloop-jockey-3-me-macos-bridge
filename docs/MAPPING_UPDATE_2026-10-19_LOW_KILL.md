@@ -1,6 +1,6 @@
 # Mapping update — A/B RELOOP button Low Kill — 2026-10-19
 
-Status: **current user-exported A/B mapping state; not yet promoted as the qualified mapping baseline**.
+Status: **current user-exported A/B mapping state; Low Kill input and physical RELOOP-button LED OUT behavior live-confirmed by Guy. Not yet promoted to `main`.**
 
 Guy manually added Mixer Low Kill to the physical RELOOP button on Deck A and Deck B in Traktor Controller Manager, including an OUT row intended to drive the same button LED, then exported each device separately.
 
@@ -27,7 +27,7 @@ Relative to the last qualified A/B Play/Pause-flash mapping checkpoint, the only
 
 No Direction + Command ID + MIDI-binding row was removed.
 
-The user's intended meaning of command 304 here is Mixer Low Kill for Deck A. The TSI proves the command ID, direction and MIDI binding; the physical behavior remains user/live-test authority.
+The user's intended meaning of command 304 here is Mixer Low Kill for Deck A. Guy subsequently live-confirmed both the Low Kill input and the matching physical RELOOP-button LED OUT after correcting an initially wrong Traktor MIDI OUT assignment.
 
 CMAD identities:
 
@@ -58,7 +58,7 @@ CMAD identities:
 - IN row ID 248: `335b99ebb04b469505d7cdae55f548688ef144d75f86d2befae52228904dc312`;
 - OUT row ID 250: `96089ee4f5e04d0634ea5a5f065016baa0ea9dd485e4044a0a69b63e22d96df8`.
 
-The user's intended meaning of command 304 here is Mixer Low Kill for Deck B. The TSI proves the command ID, direction and MIDI binding; the physical behavior remains user/live-test authority.
+The user's intended meaning of command 304 here is Mixer Low Kill for Deck B. Guy subsequently live-confirmed both the Low Kill input and the matching physical RELOOP-button LED OUT after correcting an initially wrong Traktor MIDI OUT assignment.
 
 ## Additional Deck B discrepancy to preserve
 
@@ -67,10 +67,10 @@ The Deck B export also contains two Direction + Command ID + MIDI-binding rows t
 - OUT command `100` -> `Ch02.Note.F2`;
 - OUT command `100` -> `Ch02.Note.F#2`.
 
-Command 100 is the existing Play/Pause command in the project mappings. These two rows are file facts. This pair was not part of Guy's stated Low Kill change, so do **not** attribute them to this change or delete/normalize them without separate evidence. The two previously documented unbound Deck B command-365 OUT records remain present, which is why the Deck B export has 146 commands but 144 bindings.
+Command 100 is the existing Play/Pause command in the project mappings. Guy confirmed these two rows are intentional existing mappings and should be retained. Their exact historical purpose should not be rewritten as part of the Low Kill change without separate evidence. The two previously documented unbound Deck B command-365 OUT records remain present, which is why the Deck B export has 146 commands but 144 bindings.
 
 ## Qualification boundary
 
-The last qualified full mapping checkpoint remains the prior A/B Play/Pause-flash export until Guy confirms the new Low Kill operation and any desired LED behavior on hardware.
+The prior full mapping checkpoint remains the last full-export baseline, but the new Deck A/B Low Kill mappings and their RELOOP-button LED OUT behavior are now live-confirmed by Guy.
 
 Do not overwrite the qualified mapping-only files on `main` from these exports merely because the structural audit passes.
