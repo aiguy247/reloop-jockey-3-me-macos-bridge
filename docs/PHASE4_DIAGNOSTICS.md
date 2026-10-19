@@ -280,3 +280,38 @@ Global findings:
 - the heuristic 10 ms RMS-drop list contains many musical-content candidates and is not by itself proof of digital dropouts.
 
 Approximate time alignment, using the recording filename time (18:10:07) and the bridge run ending near 18:28:14 at T+1484, places the logged playback USB events roughly at recording times 5:27, 15:23–15:25, and 16:25. No top-50 sample discontinuity is reported at those approximate positions. Because the recording start and bridge monotonic clock were not explicitly synchronized and the Traktor recorder source mode was not independently captured, this is supporting evidence only, not final proof that Traktor's recorded source path was clean at every audible pop.
+
+
+### UGREEN USB 3.0 physical-port stress run — v8.0.7
+
+Run label: `ugreen-usb3-stress-1`.
+
+The user stopped this run after hearing crackling/popping and short audio breaks. During the run the user identified a repeatable stressor: three-finger swiping between macOS desktops/spaces appeared to provoke substantially more audible popping/breaks. This observation is user-reported and does not by itself identify Chrome, memory pressure, WindowServer, GPU compositing, or another specific subsystem as the cause.
+
+The run lasted approximately 342 seconds (5 minutes 42 seconds).
+
+Operational USB events:
+
+- startup playback write: 27.442 ms;
+- startup capture read: 103.530 ms;
+- T+341.355 s playback write: 113.618 ms, success;
+- T+341.356 s capture read: 113.763 ms, success.
+
+At the 113 ms event, BlackHole callback age was approximately 6.6–6.8 ms. End-of-run totals:
+
+- BlackHole frames dropped: 0;
+- playback underrun frames: 0;
+- BlackHole callback maximum gap: 11.772 ms, no >20 ms callbacks;
+- playback operational >20 ms events: 2 including startup;
+- playback operational >50 ms events: 1;
+- capture operational >20 ms events: 2;
+- capture operational >50 ms events: 2 including startup;
+- playback USB timeouts/errors/partial transfers: 0;
+- queue probe maxima approximately 77 ms;
+- maximum ring depth: 8080 frames (168.3 ms).
+
+The Reloop remained USB High Speed / 480 Mb/s and system_profiler showed it behind the same Genesys Logic USB 2.0 hub function (VID:PID 05e3:0608, version 60.70) observed in the prior UGREEN USB 2.0 physical-port test. No separate USB3 hub function was exposed for the Reloop path. Therefore, for this USB-2 device, changing between the tested UGREEN USB 2.0 and USB 3.0 physical sockets did not produce evidence of a distinct USB-2 companion-hub path.
+
+Post-test system state showed AC power, no recorded thermal/performance warning, 34% system-wide memory free, and approximately 91 GiB root-filesystem free.
+
+Interpretation: the UGREEN USB 3.0 physical-port test reproduces the same shared playback/capture blocking pattern and does not provide evidence that this physical socket is materially better for the Reloop. The user's desktop-swipe observation creates a useful repeatable stress action for immediate A/B testing against the Hama without changing the rest of the workload.
