@@ -48,6 +48,14 @@ main() {
   RUN_LOG="$RUN_ROOT/${STAMP}-${SAFE_LABEL}-v8.0.6-console.log"
   /bin/mkdir -p "$RUN_ROOT" || return 1
 
+  PCM_ROOT="$HOME/Library/Logs/ReloopBridge/Phase4PCM"
+  if /usr/bin/find "$PCM_ROOT" -maxdepth 1 -type f \( -name 'usb_stall_*.wav' -o -name 'usb_stall_*.json' \) -print -quit 2>/dev/null | /usr/bin/grep -q .; then
+    PCM_ARCHIVE="$PCM_ROOT/archive/${STAMP}-before-${SAFE_LABEL}"
+    /bin/mkdir -p "$PCM_ARCHIVE" || return 1
+    /usr/bin/find "$PCM_ROOT" -maxdepth 1 -type f \( -name 'usb_stall_*.wav' -o -name 'usb_stall_*.json' \) -exec /bin/mv {} "$PCM_ARCHIVE/" \; || return 1
+    echo "Archived previous Phase 4 PCM captures: $PCM_ARCHIVE"
+  fi
+
   /bin/bash "$BUILD_SCRIPT" || return 1
   /bin/bash "$SNAPSHOT_SCRIPT" "${SAFE_LABEL}-v8.0.6-pretest" || return 1
 
