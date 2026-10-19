@@ -196,3 +196,201 @@
 +    uint64_t rd = atomic_load_explicit(&gPhase4CaptureEvents.readIndex,
 +                                       memory_order_relaxed);
 +    uint64_t wr = atomic_load_explicit(&gPhase4CaptureEvents.writeIndex,
++                                       memory_order_acquire);
++    if (rd >= wr)
++        return NO;
++    *out = gPhase4CaptureEvents.items[rd % PHASE4_EVENT_RING_CAPACITY];
++    atomic_store_explicit(&gPhase4CaptureEvents.readIndex, rd + 1,
++                          memory_order_release);
++    return YES;
++}
++
++static void phase4MidiErrorPush(uint64_t eventNs, int status)
++{
++    uint64_t wr = atomic_load_explicit(&gPhase4MidiErrorEvents.writeIndex,
++                                       memory_order_relaxed);
++    uint64_t rd = atomic_load_explicit(&gPhase4MidiErrorEvents.readIndex,
++                                       memory_order_acquire);
++    if (wr - rd >= PHASE4_EVENT_RING_CAPACITY) {
++        atomic_fetch_add_explicit(&gPhase4MidiErrorEvents.dropped, 1,
++                                  memory_order_relaxed);
++        return;
++    }
++    Phase4MidiErrorEvent event = {
++        .sequence = wr + 1,
++        .eventNs = eventNs,
++        .status = status
++    };
++    gPhase4MidiErrorEvents.items[wr % PHASE4_EVENT_RING_CAPACITY] = event;
++    atomic_store_explicit(&gPhase4MidiErrorEvents.writeIndex, wr + 1,
++                          memory_order_release);
++}
++
++static BOOL phase4MidiErrorPop(Phase4MidiErrorEvent *out)
++{
++    uint64_t rd = atomic_load_explicit(&gPhase4MidiErrorEvents.readIndex,
++                                       memory_order_relaxed);
++    uint64_t wr = atomic_load_explicit(&gPhase4MidiErrorEvents.writeIndex,
++                                       memory_order_acquire);
++    if (rd >= wr)
++        return NO;
++    *out = gPhase4MidiErrorEvents.items[rd % PHASE4_EVENT_RING_CAPACITY];
++    atomic_store_explicit(&gPhase4MidiErrorEvents.readIndex, rd + 1,
++                          memory_order_release);
++    return YES;
++}
++
++static void phase4PcmInit(void)
++{
++    memset(&gPhase4PcmRing, 0, sizeof(gPhase4PcmRing));
++    memset(&gPhase4PcmTriggers, 0, sizeof(gPhase4PcmTriggers));
++    atomic_init(&gPhase4PcmRing.writeFrame, 0);
++    atomic_init(&gPhase4PcmTriggers.writeIndex, 0);
++    atomic_init(&gPhase4PcmTriggers.readIndex, 0);
++    atomic_init(&gPhase4PcmTriggers.dropped, 0);
++    atomic_init(&gPhase4PcmTriggerSequence, 0);
++}
++
++static void phase4PcmTriggerPush(uint64_t eventEndNs,
++                                 uint64_t writeDurationNs,
++                                 uint64_t centerFrame)
++{
++    uint64_t wr = atomic_load_explicit(&gPhase4PcmTriggers.writeIndex,
++                                       memory_order_relaxed);
++    uint64_t rd = atomic_load_explicit(&gPhase4PcmTriggers.readIndex,
++                                       memory_order_acquire);
++
++    if (wr - rd >= PHASE4_PCM_TRIGGER_CAPACITY) {
++        atomic_fetch_add_explicit(&gPhase4PcmTriggers.dropped,
++                                  1,
++                                  memory_order_relaxed);
++        return;
++    }
++
++    Phase4PcmTrigger *event =
++        &gPhase4PcmTriggers.items[wr % PHASE4_PCM_TRIGGER_CAPACITY];
++    event->sequence =
++        atomic_fetch_add_explicit(&gPhase4PcmTriggerSequence,
++                                  1,
++                                  memory_order_relaxed) + 1;
++    event->eventEndNs = eventEndNs;
++    event->writeDurationNs = writeDurationNs;
++    event->centerFrame = centerFrame;
++
++    atomic_store_explicit(&gPhase4PcmTriggers.writeIndex,
++                          wr + 1,
++                          memory_order_release);
++}
++
++static BOOL phase4PcmTriggerPeek(Phase4PcmTrigger *out)
++{
++    uint64_t rd = atomic_load_explicit(&gPhase4PcmTriggers.readIndex,
++                                       memory_order_relaxed);
++    uint64_t wr = atomic_load_explicit(&gPhase4PcmTriggers.writeIndex,
++                                       memory_order_acquire);
++    if (rd >= wr)
++        return NO;
++
++    *out = gPhase4PcmTriggers.items[rd % PHASE4_PCM_TRIGGER_CAPACITY];
++    return YES;
++}
++
++static void phase4PcmTriggerPop(void)
++{
++    uint64_t rd = atomic_load_explicit(&gPhase4PcmTriggers.readIndex,
++                                       memory_order_relaxed);
++    atomic_store_explicit(&gPhase4PcmTriggers.readIndex,
++                          rd + 1,
++                          memory_order_release);
++}
++
++static void phase4WriteLe16(FILE *f, uint16_t value)
++{
++    uint8_t b[2] = {
++        (uint8_t)(value & 0xff),
++        (uint8_t)((value >> 8) & 0xff)
++    };
++    (void)fwrite(b, 1, sizeof(b), f);
++}
++
++static void phase4WriteLe32(FILE *f, uint32_t value)
++{
++    uint8_t b[4] = {
++        (uint8_t)(value & 0xff),
++        (uint8_t)((value >> 8) & 0xff),
++        (uint8_t)((value >> 16) & 0xff),
++        (uint8_t)((value >> 24) & 0xff)
++    };
++    (void)fwrite(b, 1, sizeof(b), f);
++}
++
++/*
++ * Return values:
++ *   1  snapshot written
++ *   0  event is valid but its post-event PCM has not arrived yet
++ *  -1  event window expired/was overwritten
++ *  -2  file/directory write failure
++ */
++static int phase4WritePcmSnapshot(const Phase4PcmTrigger *event,
++                                  const char *directory,
++                                  uint64_t diagnosticSessionStartNs)
++{
++    const uint64_t preFrames =
++        (uint64_t)SAMPLE_RATE * PHASE4_PCM_PRE_SECONDS;
++    const uint64_t postFrames =
++        (uint64_t)SAMPLE_RATE * PHASE4_PCM_POST_SECONDS;
++
++    uint64_t current =
++        atomic_load_explicit(&gPhase4PcmRing.writeFrame,
++                             memory_order_acquire);
++    uint64_t start = event->centerFrame > preFrames
++        ? event->centerFrame - preFrames : 0;
++    uint64_t end = event->centerFrame + postFrames;
++
++    if (current < end)
++        return 0;
++
++    uint64_t oldest = current > PHASE4_PCM_RING_FRAMES
++        ? current - PHASE4_PCM_RING_FRAMES : 0;
++    if (start < oldest)
++        return -1;
++
++    if (mkdir(directory, 0755) != 0 && errno != EEXIST)
++        return -2;
++
++    char wavPath[PATH_MAX];
++    char metaPath[PATH_MAX];
++    snprintf(wavPath,
++             sizeof(wavPath),
++             "%s/usb_stall_%06llu.wav",
++             directory,
++             (unsigned long long)event->sequence);
++    snprintf(metaPath,
++             sizeof(metaPath),
++             "%s/usb_stall_%06llu.json",
++             directory,
++             (unsigned long long)event->sequence);
++
++    uint64_t frameCount = end - start;
++    uint64_t dataBytes64 = frameCount * PCM_CHANNELS * sizeof(float);
++    if (dataBytes64 > UINT32_MAX)
++        return -2;
++    uint32_t dataBytes = (uint32_t)dataBytes64;
++
++    /*
++     * Copy the ready window out of the rolling ring before any disk I/O.
++     * At the first ready point the 20-second ring leaves a 10-second overwrite
++     * margin behind this 10-second window.  Copying ~7.7 MB should take far
++     * less than that, and the post-copy writeFrame check detects if it did not.
++     */
++    float *snapshot = (float *)malloc((size_t)dataBytes);
++    if (!snapshot)
++        return -2;
++
++    uint64_t frame = start;
++    size_t snapshotFloatOffset = 0;
++    while (frame < end) {
++        uint64_t slot = frame % PHASE4_PCM_RING_FRAMES;
++        uint64_t contiguous = PHASE4_PCM_RING_FRAMES - slot;
++        uint64_t remaining = end - frame;
++        if (contiguous > remaining)
