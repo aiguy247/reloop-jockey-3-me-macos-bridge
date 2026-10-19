@@ -44,9 +44,9 @@ For synchronous playback writes it keeps the existing duration and completion-ga
 - correlation at the event with:
   - BlackHole callback age;
   - successful capture age;
-  - successful MIDI-IN ae;
-  - USB interface 0 queue-probe ae;
-  - USB interface 1 queue-probe ae;
+  - successful MIDI-IN age;
+  - USB interface 0 queue-probe age;
+  - USB interface 1 queue-probe age;
   - recovery-queue probe age;
   - source ring depth;
   - USB attempt number and bytes transferred.
