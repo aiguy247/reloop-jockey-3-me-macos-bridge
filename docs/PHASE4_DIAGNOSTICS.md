@@ -386,7 +386,7 @@ SHA-256:
 
 `4fed39df7a9b2a792ceca42c68bf8d5c278e96505717888998411563b6e00537`
 
-Status: **development candidate only; not qualified and not yet Mac-build-validated at the time of this entry.**
+Status: **development candidate only; not qualified. Mac build gate PASSED on Guy's Apple-Silicon Mac on 2026-10-19.**
 
 v8.0.8 keeps the v8.0.7 normal synchronous playback/capture architecture and adds two focused changes.
 
@@ -414,3 +414,17 @@ The environment snapshot helper now also records a process snapshot and the prev
 3. Short controlled Spaces/window-switch reproduction attempt to see whether the new 6 ms events/buckets correlate with audible pops.
 4. If the short checks are sound, run the realistic long Hama qualification-style session: recording on; normal DJing followed by Cruise/continuous playback; avoid deliberate Spaces switching; Wi-Fi/Bluetooth according to the chosen live-use baseline.
 5. A future catastrophic zero-byte event is specifically useful: determine whether v8.0.8 warm recovery revives the existing controller session. If it cannot, the next recovery design must consider full device re-enumeration/reopen rather than pretending pipe clear/restart is sufficient.
+
+
+### v8.0.8 Mac build gate — PASS
+
+Guy ran the repository build gate on the project Mac after fast-forwarding `phase4-diagnostics`.
+
+Result:
+
+- build: **PASS**;
+- source SHA-256: `4fed39df7a9b2a792ceca42c68bf8d5c278e96505717888998411563b6e00537`;
+- output: Mach-O 64-bit executable arm64;
+- built binary SHA-256: `66355176b2bc4193e4a749c72a56ab48771b71ed91d1cb8f638fd924961618a4`.
+
+This satisfies the compile/build gate only. It does not qualify v8.0.8 behavior on hardware.
