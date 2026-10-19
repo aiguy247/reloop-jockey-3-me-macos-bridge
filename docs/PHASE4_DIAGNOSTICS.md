@@ -347,3 +347,70 @@ Post-test state reported 37% system-wide memory free and no recorded macOS therm
 Topology remained different from UGREEN: Hama exposed a Genesys Logic USB2.1 hub function VID:PID 05e3:0610 version 6.56; the Reloop enumerated at 480 Mb/s. UGREEN exposed 05e3:0608 version 60.70.
 
 Current operational conclusion: Hama remains the preferred hub of the two based on the combined longer-run and user-observed evidence, but it does not eliminate the fault. Spaces switching is now a repeatable stress action worth instrumenting more directly. Hub identity alone is not sufficient to explain all audible popping.
+
+
+## Hama near-live restart test and v8.0.8 response — 2026-10-19
+
+### Hama near-live v8.0.7 result
+
+Run label: `hama-near-live-1`.
+
+User-observed sequence:
+
+- After a Mac restart, audible crackling/popping was still present initially while switching among windows/Spaces.
+- After several minutes of DJing, the audible behavior appeared to settle; subsequent window/Space switching no longer obviously produced the same crackling during that period.
+- Later, opening an HTML file launched Google Chrome. The user reports that **starting Chrome was the immediate trigger for the catastrophic failure**. This records the observed trigger; it does not identify the mechanism as memory, CPU, GPU, disk, WindowServer, USB host scheduling, or Chrome touching USB.
+- Traktor itself remained running.
+- The foreground v8.0.7 bridge stopped after its transport failure and the runner restored qualified v8.1.3.
+- The Reloop remained frozen/unusable after v8.1.3 was restored. The user power-cycled only the Reloop; it then reconnected to Traktor and the controller could again stop/control playback.
+
+Logged transport evidence at the catastrophic event:
+
+- Immediately beforehand, normal playback writes were approximately 3.3 ms.
+- First playback failure at T+860.208 s: 0/4096 bytes after 201.340 ms.
+- Same-block retry at T+860.418 s: 0/4096 bytes after 208.252 ms.
+- Capture failed in the same interval: 0-byte failures after 201.371 ms and 208.180 ms.
+- v8.0.7 therefore exhausted its one-retry policy and deliberately marked playback fatal; this was not an unhandled process crash.
+- BlackHole remained healthy through the run: zero dropped frames, zero playback underrun frames, callback maximum gap 10.817 ms.
+- Post-test snapshot reported 71% system-wide memory free, zero swap-ins/outs for that boot, zero throttled pages, and no recorded thermal/performance warning. That evidence does not support a memory-exhaustion explanation for the event.
+
+This is materially different from the earlier 100–123 ms successful stalls: the near-live event produced actual zero-byte USB I/O failures in both playback and capture and left the controller requiring a physical power cycle before the restored qualified service could use it again.
+
+### v8.0.8 diagnostic/recovery candidate
+
+Source:
+
+`src/phase4/reloop_jockey3_bridge_v8_0_8_phase4_recovery_diagnostics_48k.m`
+
+SHA-256:
+
+`44f993eb8bc90b4e619c73505363598fc132a824b358ed53c146fd6f7c3598ad`
+
+Status: **development candidate only; not qualified and not yet Mac-build-validated at the time of this entry.**
+
+v8.0.8 keeps the v8.0.7 normal synchronous playback/capture architecture and adds two focused changes.
+
+1. **Bounded synchronous transport recovery**
+   - A single zero-byte playback failure still retries the exact same 4096-byte block once.
+   - If the second attempt also returns zero bytes, playback requests one recovery instead of immediately terminating.
+   - Recovery runs off the real-time playback/capture threads.
+   - It pauses new synchronous requests, fences MIDI resubmission, asynchronously aborts playback/capture/MIDI pipes, waits for pending requests to drain, clears all three pipe stalls, and reasserts the vendor streaming status bit.
+   - On a successful warm recovery it trims stale queued source audio, restarts MIDI drain, resumes capture/playback, and deliberately does **not** replay the stale failed playback block.
+   - If the bounded recovery fails, the candidate still terminates and the foreground runner restores qualified v8.1.3. It does not silently loop recovery indefinitely.
+   - No automatic USB-device `resetWithError:` is used. Apple documents that a device reset terminates the current IOUSBHostDevice and child services and requires creation of new framework clients, so that is a separate escalation design, not treated as a drop-in pipe recovery.
+
+2. **Shorter-latency event diagnostics for Spaces/window-switch popping**
+   - Playback and capture event snapshots now begin above 6 ms instead of only above 20 ms.
+   - Playback write and completion-gap summaries add 4/6/8 ms buckets while retaining 10/20/50 ms counters and the existing >50 ms PCM trigger.
+   - Capture summaries add 4/6/8 ms buckets while retaining the existing >20/>50 operational counters.
+   - No diagnostic file I/O is added to the real-time threads.
+
+The environment snapshot helper now also records a process snapshot and the previous two minutes of macOS unified-log entries containing USB-related messages. Standard macOS IORegistry/system_profiler data can show the hub topology, device state exposed by IOKit, speed, power data, and host-side USB messages. It does **not** provide known direct telemetry from inside the Genesys Logic hub controller itself; any deeper hub-internal visibility would require a vendor/debug interface that has not been established for these hubs.
+
+### Next validation order
+
+1. Build-gate v8.0.8 on Guy's Mac. Do not treat source/static review as a successful build.
+2. Short Hama functional check: audio routing, controller/MIDI, Tempo Master LED behavior, Traktor recording.
+3. Short controlled Spaces/window-switch reproduction attempt to see whether the new 6 ms events/buckets correlate with audible pops.
+4. If the short checks are sound, run the realistic long Hama qualification-style session: recording on; normal DJing followed by Cruise/continuous playback; avoid deliberate Spaces switching; Wi-Fi/Bluetooth according to the chosen live-use baseline.
+5. A future catastrophic zero-byte event is specifically useful: determine whether v8.0.8 warm recovery revives the existing controller session. If it cannot, the next recovery design must consider full device re-enumeration/reopen rather than pretending pipe clear/restart is sufficient.
