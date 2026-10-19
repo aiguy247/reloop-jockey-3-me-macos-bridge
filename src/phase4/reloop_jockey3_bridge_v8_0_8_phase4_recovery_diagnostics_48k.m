@@ -3365,7 +3365,7 @@ int main(void)
         signal(SIGUSR1, handlePhase4ManualPcmSignal);
 
         printf("Reloop Jockey 3 ME audio + CoreMIDI bridge v8.0.8 (v8.0.4 behavior + diagnostic-only USB/MIDI event logging)\n");
-        printf("48 kHz, vendor-trace init + direct completion-driven async USB streaming.\n");
+        printf("48 kHz, vendor-trace init + dedicated real-time synchronous USB playback/capture.\n");
         printf("Firmware is NOT modified by this program.\n");
         printf("BlackHole channels 1/2 -> Reloop Master L/R\n");
         printf("BlackHole channels 4/3 -> Reloop Headphones L/R (verified in Traktor pan test)\n");
