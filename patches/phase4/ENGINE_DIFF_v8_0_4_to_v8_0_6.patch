@@ -988,3 +988,198 @@
 +            .lastSlowWriteAttempt = &lastSlowWriteAttempt,
 +            .lastSlowWriteSuccess = &lastSlowWriteSuccess,
 +            .lastSlowWriteBhCallbackAgeNs = &lastSlowWriteBhCallbackAgeNs,
++            .lastSlowWriteCaptureSuccessAgeNs = &lastSlowWriteCaptureSuccessAgeNs,
++            .lastSlowWriteMidiSuccessAgeNs = &lastSlowWriteMidiSuccessAgeNs,
++            .lastSlowWriteIf0ProbeAgeNs = &lastSlowWriteIf0ProbeAgeNs,
++            .lastSlowWriteIf1ProbeAgeNs = &lastSlowWriteIf1ProbeAgeNs,
++            .lastSlowWriteRecoveryProbeAgeNs = &lastSlowWriteRecoveryProbeAgeNs,
++            .lastCaptureSuccessNs = &lastCaptureSuccessNs,
++            .lastMidiSuccessNs = &lastMidiSuccessNs,
++            .if0ProbeLastNs = &if0ProbeLastNs,
++            .if1ProbeLastNs = &if1ProbeLastNs,
++            .recoveryProbeLastNs = &recoveryProbeLastNs,
+             .softResyncCount = &softResyncCount,
+             .softResyncFramesDiscarded = &softResyncFramesDiscarded,
+             .catchupRequested = &catchupRequested,
+@@ -3866,7 +4701,7 @@
+ 
+         printf("\nAUDIO + MIDI BRIDGE ACTIVE\n");
+         printf("CoreMIDI In-Port/Out-Port in Traktor: Reloop Jockey 3 ME (Bridge)\n");
+-        printf("v8.0.4 MIDI OUT: actual Tempo Master gates Deck A/B Beat Phase trash LEDs and mirrors phase to the master Play/Pause LED; non-master Play LEDs remain normal.\n");
++        printf("v8.0.6 MIDI OUT behavior unchanged from v8.0.4: actual Tempo Master gates Deck A/B Beat Phase trash LEDs and mirrors phase to the master Play/Pause LED; non-master Play LEDs remain normal.\n");
+         printf("Playback transport: one dedicated Mach real-time pthread, synchronous %d-byte bulk writes.\n",
+                BATCH_SIZE);
+         printf("Set Traktor Audio Device to BlackHole 16ch at 48000 Hz.\n");
+@@ -3888,9 +4723,10 @@
+         printf("v8.0.2 catch-up limit: -%.1f%% source-clock correction; fixed per event; exit below %.1f ms ring depth.\n",
+                CATCHUP_MAX_SLOW_PPM / 10000.0,
+                1000.0 * CATCHUP_EXIT_FRAMES / 48000.0);
+-        printf("v8.0.2 ring capacity is %.1f ms of headroom; normal target remains %.1f ms.\n\n",
++        printf("v8.0.2 ring capacity is %.1f ms of headroom; normal target remains %.1f ms.\n",
+                1000.0 * AUDIO_RING_FRAMES / 48000.0,
+                1000.0 * SERVO_TARGET_FRAMES / 48000.0);
++        printf("v8.0.6 Phase 4 diagnostics: split USB/MIDI timeout/error classes; correlate playback/capture/BH/MIDI timing; save 10-second pre-USB PCM windows for writes >50 ms; no diagnostic file I/O on real-time threads.\n\n");
+ 
+         unsigned seconds = 0;
+         double servoDepthSum = 0.0;
+@@ -4029,6 +4865,90 @@
+                 }
+             }
+ 
++            /*
++             * v8.0.6: drain every queued slow-event snapshot from the ordinary
++             * main thread.  Real-time threads only publish fixed-size records.
++             */
++            Phase4PlaybackDiagEvent playbackEvent;
++            while (phase4PlaybackEventPop(&playbackEvent)) {
++                double eventSeconds =
++                    (playbackEvent.eventEndNs > diagnosticSessionStartNs)
++                        ? (double)(playbackEvent.eventEndNs -
++                                   diagnosticSessionStartNs) / 1e9
++                        : 0.0;
++                printf("USB DIAG PLAYBACK #%llu: T+%.3fs write %.3f ms, completion gap %.3f ms, bytes %lu, attempt %lu, result %s, ring %llu (%.1f ms), ages at completion: BH %.3f ms, capture-success %.3f ms, MIDI-success %.3f ms, if0-probe %.3f ms, if1-probe %.3f ms, recovery-probe %.3f ms.\n",
++                       (unsigned long long)playbackEvent.sequence,
++                       eventSeconds,
++                       (double)playbackEvent.writeDurationNs / 1e6,
++                       (double)playbackEvent.completionGapNs / 1e6,
++                       playbackEvent.bytesTransferred,
++                       playbackEvent.attempt,
++                       playbackEvent.success ? "success" : "failure",
++                       (unsigned long long)playbackEvent.ringDepthFrames,
++                       1000.0 * playbackEvent.ringDepthFrames / 48000.0,
++                       (double)playbackEvent.bhCallbackAgeNs / 1e6,
++                       (double)playbackEvent.captureSuccessAgeNs / 1e6,
++                       (double)playbackEvent.midiSuccessAgeNs / 1e6,
++                       (double)playbackEvent.if0ProbeAgeNs / 1e6,
++                       (double)playbackEvent.if1ProbeAgeNs / 1e6,
++                       (double)playbackEvent.recoveryProbeAgeNs / 1e6);
++            }
++
++            Phase4CaptureDiagEvent captureEvent;
++            while (phase4CaptureEventPop(&captureEvent)) {
++                double eventSeconds =
++                    (captureEvent.eventEndNs > diagnosticSessionStartNs)
++                        ? (double)(captureEvent.eventEndNs -
++                                   diagnosticSessionStartNs) / 1e9
++                        : 0.0;
++                printf("USB DIAG CAPTURE #%llu: T+%.3fs read %.3f ms, bytes %lu, result %s, ages at completion: playback-success %.3f ms, BH %.3f ms, MIDI-success %.3f ms.\n",
++                       (unsigned long long)captureEvent.sequence,
++                       eventSeconds,
++                       (double)captureEvent.durationNs / 1e6,
++                       captureEvent.bytesTransferred,
++                       captureEvent.success ? "success" : "failure",
++                       (double)captureEvent.playbackSuccessAgeNs / 1e6,
++                       (double)captureEvent.bhCallbackAgeNs / 1e6,
++                       (double)captureEvent.midiSuccessAgeNs / 1e6);
++            }
++
++            Phase4MidiErrorEvent midiErrorEvent;
++            while (phase4MidiErrorPop(&midiErrorEvent)) {
++                double eventSeconds =
++                    (midiErrorEvent.eventNs > diagnosticSessionStartNs)
++                        ? (double)(midiErrorEvent.eventNs -
++                                   diagnosticSessionStartNs) / 1e9
++                        : 0.0;
++                printf("MIDI DIAG ERROR #%llu: T+%.3fs non-timeout completion IOReturn 0x%08x.\n",
++                       (unsigned long long)midiErrorEvent.sequence,
++                       eventSeconds,
++                       (unsigned int)midiErrorEvent.status);
++            }
++
++            for (;;) {
++                Phase4PcmTrigger pcmEvent;
++                if (!phase4PcmTriggerPeek(&pcmEvent))
++                    break;
++
++                int pcmResult =
++                    phase4WritePcmSnapshot(&pcmEvent,
++                                           phase4PcmDirectory,
++                                           diagnosticSessionStartNs);
++                if (pcmResult == 0)
++                    break;
++                if (pcmResult == -1) {
++                    fprintf(stderr,
++                            "PCM DIAG DROPPED #%llu: rolling buffer window expired before it could be written.\n",
++                            (unsigned long long)pcmEvent.sequence);
++                } else if (pcmResult == -2) {
++                    fprintf(stderr,
++                            "PCM DIAG ERROR #%llu: could not write snapshot under %s.\n",
++                            (unsigned long long)pcmEvent.sequence,
++                            phase4PcmDirectory);
++                }
++                phase4PcmTriggerPop();
++            }
++
+             printf("T+%4us | Ring: %5llu (%6.1f ms) | drop:%llu under:%llu | "
+                    "USB:%lu maxgap:%5.1fms write:%5.1fms W50:%lu refill:%5.1fms | "
+                    "Q0:%5.1f Q1:%5.1f RQ:%5.1fms | "
+@@ -4274,13 +5194,34 @@
+                atomic_load(&captureTransfers),
+                atomic_load(&captureErrors),
+                atomic_load(&capturePending));
+-        printf("Synchronous capture read duration: max %.3f ms; over-50ms %lu\n",
++        printf("Synchronous capture read duration: max %.3f ms; raw over-50ms %lu; operational over-20ms %lu; operational over-50ms %lu; timeouts %lu; other errors %lu\n",
+                (double)atomic_load(&maxCaptureSyncDurationNs) / 1000000.0,
+-               atomic_load(&captureSyncOver50ms));
+-        printf("MIDI drain transfers: %lu; errors/timeouts: %lu; pending: %lu\n",
++               atomic_load(&captureSyncOver50ms),
++               atomic_load(&captureOperationalOver20ms),
++               atomic_load(&captureOperationalOver50ms),
++               atomic_load(&captureTimeouts),
++               atomic_load(&captureOtherErrors));
++        if (atomic_load(&captureOtherErrors) > 0) {
++            printf("Capture last non-timeout IOUSBHost/other NSError code: 0x%08x\n",
++                   (unsigned int)atomic_load(&captureLastOtherStatus));
++        }
++        printf("MIDI drain transfers: %lu; timeouts: %lu; other completion errors: %lu; queue submission failures: %lu; legacy combined errors/timeouts: %lu; pending: %lu\n",
+                atomic_load(&midiDrainTransfers),
++               atomic_load(&midiDrainTimeouts),
++               atomic_load(&midiDrainOtherErrors),
++               atomic_load(&midiQueueFailures),
+                atomic_load(&midiDrainErrors),
+                atomic_load(&midiPending));
++        if (atomic_load(&midiDrainOtherErrors) > 0) {
++            uint64_t eventNs = atomic_load(&midiLastOtherErrorNs);
++            double eventSeconds =
++                (eventNs > diagnosticSessionStartNs)
++                    ? (double)(eventNs - diagnosticSessionStartNs) / 1e9
++                    : 0.0;
++            printf("MIDI last non-timeout completion error: IOReturn 0x%08x at T+%.3fs\n",
++                   (unsigned int)atomic_load(&midiLastOtherStatus),
++                   eventSeconds);
++        }
+         printf("CoreMIDI IN forwarded: %lu complete messages; %lu CoreMIDI packets; %lu bytes; errors: %lu\n",
+                atomic_load(&coreMidi->midiInMessagesForwarded),
+                atomic_load(&coreMidi->midiInBatchesForwarded),
+@@ -4327,11 +5268,29 @@
+         printf("Playback max completion-to-refill-finished delay: %.3f ms\n",
+                (double)atomic_load(&maxPlaybackRefillDelayNs) / 1000000.0);
+         printf("Synchronous USB write duration: max %.3f ms; "
+-               "over-10ms %lu; over-20ms %lu; over-50ms %lu\n",
++               "raw over-10ms %lu; raw over-20ms %lu; raw over-50ms %lu; "
++               "operational over-20ms %lu; operational over-50ms %lu; "
++               "timeouts %lu; other errors %lu; partial transfers %lu\n",
+                (double)atomic_load(&maxSyncWriteDurationNs) / 1000000.0,
+                atomic_load(&syncWriteOver10ms),
+                atomic_load(&syncWriteOver20ms),
+-               atomic_load(&syncWriteOver50ms));
++               atomic_load(&syncWriteOver50ms),
++               atomic_load(&slowWriteOperationalOver20ms),
++               atomic_load(&slowWriteOperationalOver50ms),
++               atomic_load(&playbackTimeouts),
++               atomic_load(&playbackOtherErrors),
++               atomic_load(&playbackPartialTransfers));
++        if (atomic_load(&playbackOtherErrors) > 0) {
++            printf("Playback last non-timeout IOUSBHost/other NSError code: 0x%08x\n",
++                   (unsigned int)atomic_load(&playbackLastOtherStatus));
++        }
++        printf("Phase 4 diagnostic event queue drops: playback %llu; capture %llu; MIDI %llu\n",
++               (unsigned long long)atomic_load(&gPhase4PlaybackEvents.dropped),
++               (unsigned long long)atomic_load(&gPhase4CaptureEvents.dropped),
++               (unsigned long long)atomic_load(&gPhase4MidiErrorEvents.dropped));
++        printf("Phase 4 PCM trigger queue drops: %llu; snapshots are stored under %s\n",
++               (unsigned long long)atomic_load(&gPhase4PcmTriggers.dropped),
++               phase4PcmDirectory);
+         printf("Queue probe if0: max %.3f ms; over-20ms %lu; over-50ms %lu\n",
+                (double)atomic_load(&if0ProbeMaxGapNs) / 1000000.0,
+                atomic_load(&if0ProbeOver20ms),
