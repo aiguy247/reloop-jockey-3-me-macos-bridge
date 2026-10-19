@@ -1,0 +1,6 @@
+# Phase 4 candidate artifacts - NOT QUALIFIED
+# Qualified main baseline remains engine v8.0.4 / service v8.1.3.
+# The v8.0.6 source is generated locally from the qualified v8.0.4 source + patch.
+344a9572c2ada2b3c4e2839f2a91a8416eddb5236eb06963e1b6c0d1b54b3398  src/reloop_jockey3_bridge_v8_0_4_master_play_flash_48k.m
+de98acbd48f939aa199569027861720a5cc4bb80b4592ca1d891bb9c8722209f  patches/phase4/ENGINE_DIFF_v8_0_4_to_v8_0_6.patch
+25894116213bce18c46a476f9c1607a76032ca27c3a73d03cd2ee25245005c04  [generated] build/phase4-generated/reloop_jockey3_bridge_v8_0_6_phase4_diagnostics_48k.m
