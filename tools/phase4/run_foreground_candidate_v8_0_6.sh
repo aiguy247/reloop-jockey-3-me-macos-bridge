@@ -40,8 +40,16 @@ main() {
   SNAPSHOT_SCRIPT="$SCRIPT_DIR/capture_usb_environment.sh"
   ENGINE="$REPO_DIR/build/reloop_bridge_engine_v8_0_6_phase4_diagnostics"
 
+  RUN_LABEL="${1:-hama-smoke}"
+  SAFE_LABEL="$(printf '%s' "$RUN_LABEL" | /usr/bin/tr -cs '[:alnum:]_.-' '_' | /usr/bin/sed 's/^_*//;s/_*$//')"
+  [[ -n "$SAFE_LABEL" ]] || SAFE_LABEL="unlabeled"
+  STAMP="$(/bin/date '+%Y%m%d-%H%M%S')"
+  RUN_ROOT="$HOME/Library/Logs/ReloopBridge/Phase4Runs"
+  RUN_LOG="$RUN_ROOT/${STAMP}-${SAFE_LABEL}-v8.0.6-console.log"
+  /bin/mkdir -p "$RUN_ROOT" || return 1
+
   /bin/bash "$BUILD_SCRIPT" || return 1
-  /bin/bash "$SNAPSHOT_SCRIPT" "foreground-v8.0.6-pretest" || return 1
+  /bin/bash "$SNAPSHOT_SCRIPT" "${SAFE_LABEL}-v8.0.6-pretest" || return 1
 
   if /bin/launchctl print "gui/$UID_NUM/$LEGACY_LABEL" >/dev/null 2>&1; then
     LEGACY_WAS_LOADED=1
@@ -63,16 +71,20 @@ main() {
 
   echo
   echo "STARTING FOREGROUND PHASE 4 CANDIDATE v8.0.6"
+  echo "Run label: $RUN_LABEL"
+  echo "Console log: $RUN_LOG"
   echo "Control-C stops the candidate. The qualified v8.1.3 service will then be restored if it was loaded before this test."
   echo
-  "$ENGINE"
-  CANDIDATE_STATUS=$?
+
+  "$ENGINE" 2>&1 | /usr/bin/tee "$RUN_LOG"
+  CANDIDATE_STATUS="${PIPESTATUS[0]}"
 
   restore_legacy
   trap - EXIT
 
   echo
   echo "Foreground candidate finished with status $CANDIDATE_STATUS."
+  echo "Console log saved: $RUN_LOG"
   return "$CANDIDATE_STATUS"
 }
 
