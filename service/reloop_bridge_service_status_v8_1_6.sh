@@ -4,7 +4,7 @@ set -u
 LABEL="com.guy.reloopbridge"
 SPOTLIGHT_LABEL="com.guy.reloopbridge.spotlightguard"
 MOTION_LABEL="com.guy.reloopbridge.reducemotionguard"
-UID_NUM="$(/usr/bin/id -u)"
+UID_NUM="$(id -u)"
 APP_DIR="$HOME/Library/Application Support/ReloopBridge"
 LOG_DIR="$HOME/Library/Logs/ReloopBridge"
 MOTION_HELPER="$APP_DIR/reloop_reduce_motion_guard_v8_1_6"
@@ -23,7 +23,9 @@ fi
 echo
 if /bin/launchctl print "gui/$UID_NUM/$LABEL" >/dev/null 2>&1; then
   echo "Bridge LaunchAgent (v8.1.5 component): LOADED"
-  /bin/launchctl print "gui/$UID_NUM/$LABEL" 2>/dev/null | /usr/bin/grep -E "state =|pid =|last exit code" | /usr/bin/head -n 10
+  /bin/launchctl print "gui/$UID_NUM/$LABEL" 2>/dev/null |
+    /usr/bin/grep -E "state =|pid =|last exit code" |
+    /usr/bin/head -n 10
 else
   echo "Bridge LaunchAgent: NOT LOADED"
 fi
@@ -31,7 +33,9 @@ fi
 echo
 if /bin/launchctl print "system/$SPOTLIGHT_LABEL" >/dev/null 2>&1; then
   echo "Spotlight guard (v8.1.5 component): LOADED"
-  /bin/launchctl print "system/$SPOTLIGHT_LABEL" 2>/dev/null | /usr/bin/grep -E "state =|pid =|last exit code" | /usr/bin/head -n 10
+  /bin/launchctl print "system/$SPOTLIGHT_LABEL" 2>/dev/null |
+    /usr/bin/grep -E "state =|pid =|last exit code" |
+    /usr/bin/head -n 10
 else
   echo "Spotlight guard: NOT LOADED"
 fi
@@ -39,7 +43,9 @@ fi
 echo
 if /bin/launchctl print "gui/$UID_NUM/$MOTION_LABEL" >/dev/null 2>&1; then
   echo "Reduce Motion guard v8.1.6: LOADED"
-  /bin/launchctl print "gui/$UID_NUM/$MOTION_LABEL" 2>/dev/null | /usr/bin/grep -E "state =|pid =|last exit code" | /usr/bin/head -n 10
+  /bin/launchctl print "gui/$UID_NUM/$MOTION_LABEL" 2>/dev/null |
+    /usr/bin/grep -E "state =|pid =|last exit code" |
+    /usr/bin/head -n 10
 else
   echo "Reduce Motion guard v8.1.6: NOT LOADED"
 fi
@@ -70,9 +76,9 @@ else
 fi
 
 echo
-if /usr/bin/pgrep -h "$ENGINE_NAME" >/dev/null 2>&1; then
+if /usr/bin/pgrep -f "$ENGINE_NAME" >/dev/null 2>&1; then
   echo "Bridge engine v8.0.8: RUNNING"
-  /usr/bin/pgrep -hl "$ENGINE_NAME"
+  /usr/bin/pgrep -fl "$ENGINE_NAME"
 else
   echo "Bridge engine v8.0.8: NOT RUNNING"
 fi
