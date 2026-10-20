@@ -46,3 +46,48 @@ The associated Traktor master recordings were scanned locally across **3:43:15.3
 - no sustained digital clipping detected.
 
 The recording point is upstream of BlackHole → bridge → USB → Reloop DAC, so it cannot prove downstream playback quality.
+
+
+## v8.0.8 / v8.1.5 final live acceptance — 20 October 2026
+
+Guy accepted engine v8.0.8 / service v8.1.5 as the de facto running baseline after several live tests on the physical Reloop Jockey 3 ME.
+
+Final tested configuration included:
+
+- Traktor Pro 3.11.1.17;
+- BlackHole 16ch at 48 kHz;
+- 384-sample buffer, approximately 8 ms reported overall latency;
+- Traktor Multi-Core Processing OFF;
+- v8.1.5 automatic Spotlight indexing guard active;
+- Touch Bar set to Expanded Control Strip;
+- automatic display brightness OFF;
+- True Tone ON;
+- Reduce Motion ON;
+- Hama hub path;
+- current Deck A/B Low Kill mappings;
+- current Deck B XFA–XFD Deck D sample-trigger mappings.
+
+Guy reports the final configuration remained smooth during normal mixing and controller use, with:
+
+- no UI glitches;
+- no pops/clicks;
+- no crackling;
+- no audio drops.
+
+### Recording / application-load check
+
+Guy additionally tested with Traktor Mix Recorder running while both Google Chrome and the ChatGPT desktop app remained open.
+
+He reports recording worked normally and the earlier UI/audio symptoms did not recur.
+
+Therefore Mix Recorder is **not** classified as a current fault or required-disable setting. The earlier recording-on/off comparison remains historical evidence of a workload confound, not proof that recording caused the problem.
+
+### Spotlight guard check
+
+The helper was directly observed detecting Traktor, saving the previous Spotlight indexing state and disabling indexing. Guy then repeated the Traktor start/stop cycle several times and reports that indexing is restored correctly after Traktor exits.
+
+### Causality boundary
+
+Several changes were made before the final successful configuration. The evidence supports the **combined final configuration**, but does not prove that one single setting caused or fixed the earlier symptoms.
+
+The v8.0.8 bounded catastrophic USB-recovery path also remains unexercised because the final tests did not reproduce the catastrophic zero-byte USB failure.
