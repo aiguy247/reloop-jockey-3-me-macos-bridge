@@ -64,6 +64,7 @@ Current Deck A/B additions include:
 
 - RELOOP button -> Mixer Low Kill, including matching LED OUT;
 - Deck B XFA–XFD -> Deck D Remix slots 1–4 Slot Retrigger while Deck B remains selected.
+- Deck A/B FX Unit 4 versus Browser/Load physical-button assignments swapped for improved playing accessibility.
 
 The mappings also contain project workflow choices such as Favorites browsing, Recorder/Cruise assignments and Deck C/D behavior. Those choices are not requirements of the bridge itself.
 
