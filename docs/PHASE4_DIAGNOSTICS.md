@@ -489,3 +489,23 @@ The guard uses `mdutil -i off /` / `mdutil -i on /`. It does not kill `mds`, `fi
 No standalone cloud-drive client was present in the process snapshot supplied by Guy, so v8.1.5 does not add automatic cloud-app shutdown.
 
 See `docs/V8_1_5_SPOTLIGHT_GUARD.md` and the v8.1.5 service scripts.
+
+
+### v8.1.5 local installation — PASS
+
+Guy installed the v8.1.5 candidate on the project Mac on 2026-10-20.
+
+Observed result:
+
+- v8.0.8 build gate passed;
+- source SHA-256: `4fed39df7a9b2a792ceca42c68bf8d5c278e96505717888998411563b6e00537`;
+- built arm64 binary SHA-256: `66355176b2bc4193e4a749c72a56ab48771b71ed91d1cb8f638fd924961618a4`;
+- user LaunchAgent `com.guy.reloopbridge` loaded and running;
+- root LaunchDaemon `com.guy.reloopbridge.spotlightguard` loaded and running;
+- Traktor was not running at the check point;
+- Spotlight indexing was enabled, which is the expected idle state;
+- Reloop controller was connected;
+- v8.0.8 engine was running from `~/Library/Application Support/ReloopBridge/reloop_bridge_engine_v8_0_8`;
+- rollback copy of the prior v8.1.3 runtime was preserved under `~/Library/Application Support/ReloopBridge/rollback_v8_1_3`.
+
+This confirms installation/startup only. The automatic Spotlight transition still requires live verification with Traktor start/stop, and hardware/audio behavior remains separately qualified.
