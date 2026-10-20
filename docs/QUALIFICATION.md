@@ -4,9 +4,9 @@
 
 The project uses three evidence levels:
 
-1. **Structural validation** — source/mapping structure is internally consistent.
-2. **Runtime evidence** — logs show how the bridge behaved under load.
-3. **Live hardware qualification** — the physical controller is tested in Traktor.
+1. **Structural validation** — source/mapping/script structure is internally consistent.
+2. **Runtime evidence** — logs show how the bridge/helper behaved.
+3. **Live hardware qualification** — the physical controller and Traktor/macOS behavior are tested directly.
 
 Live hardware is the final acceptance gate for controller behavior.
 
@@ -16,78 +16,41 @@ The actual-Tempo-Master trash LED and Play/Pause LED behavior was tested on the 
 
 The five mapping-only Controller Manager exports in `mapping/` were taken from that final qualified Traktor mapping state.
 
-The v8.1.3 service wrapper was qualified only in the original local environment. Its local path/label assumptions mean it is not yet a reusable public installer.
-
-## Near-four-hour session
-
-A later session using v8.0.4 / v8.1.3 ran from 20:46:03 until physical controller removal at 00:31:37.
-
-Key shutdown counters:
-
-- BlackHole frames dropped: **0**
-- Playback underrun frames: **0**
-- CoreMIDI OUT dropped: **0**
-- One clock catch-up event
-- Maximum playback completion gap: **119.349 ms**
-- Maximum synchronous USB write: **119.321 ms**
-
-The 119.3 ms USB write was a real transport stall. Buffering/catch-up recovered without a software-path underrun. This is a successful recovery result, not proof that analog output was acoustically perfect during the event.
-
-## Traktor master-recording analysis
-
-The associated Traktor master recordings were scanned locally across **3:43:15.371** of stereo PCM:
-
-- 642,977,792 stereo frames processed;
-- zero read/decode errors;
-- **0 high-confidence digital glitches**;
-- two very short medium-confidence click-like review leads, neither established as a Traktor fault;
-- no medium/high event within ±30 seconds of the filename-derived USB-stall position;
-- no detectable discontinuity at Traktor's WAV split;
-- no sustained digital clipping detected.
-
-The recording point is upstream of BlackHole → bridge → USB → Reloop DAC, so it cannot prove downstream playback quality.
-
-
 ## v8.0.8 / v8.1.5 final live acceptance — 20 October 2026
 
-Guy accepted engine v8.0.8 / service v8.1.5 as the de facto running baseline after several live tests on the physical Reloop Jockey 3 ME.
+Guy accepted engine v8.0.8 / service v8.1.5 as the running baseline after several live tests on the physical controller.
 
-Final tested configuration included:
+Final tested configuration included Traktor Pro 3.11.1.17, BlackHole 16ch at 48 kHz, 384-sample buffer, Multi-Core Processing OFF, the automatic Spotlight guard, and the documented current mappings.
 
-- Traktor Pro 3.11.1.17;
-- BlackHole 16ch at 48 kHz;
-- 384-sample buffer, approximately 8 ms reported overall latency;
-- Traktor Multi-Core Processing OFF;
-- v8.1.5 automatic Spotlight indexing guard active;
-- Touch Bar set to Expanded Control Strip;
-- automatic display brightness OFF;
-- True Tone ON;
-- Reduce Motion ON;
-- Hama hub path;
-- current Deck A/B Low Kill mappings;
-- current Deck B XFA–XFD Deck D sample-trigger mappings.
+Guy reported smooth normal mixing/recording with no UI glitches, pops/clicks, crackling or audio drops in the final configuration.
 
-Guy reports the final configuration remained smooth during normal mixing and controller use, with:
+The Spotlight helper was directly observed detecting Traktor, disabling indexing and restoring the prior state after Traktor exited.
 
-- no UI glitches;
-- no pops/clicks;
-- no crackling;
-- no audio drops.
+## v8.1.6 Reduce Motion acceptance — 20 October 2026
 
-### Recording / application-load check
+The Reduce Motion logic that became production v8.1.6 was live-tested as candidate v5 on the same Mac.
 
-Guy additionally tested with Traktor Mix Recorder running while both Google Chrome and the ChatGPT desktop app remained open.
+Accepted sequence:
 
-He reports recording worked normally and the earlier UI/audio symptoms did not recur.
+1. Reduce Motion starts OFF.
+2. Traktor starts.
+3. Helper detects the exact `Traktor` process and saves `disabled` as the pre-Traktor state.
+4. Reduce Motion becomes ON.
+5. Traktor exits.
+6. Helper restores Reduce Motion to OFF.
+7. Desktop/Spaces motion returns immediately without restarting Dock.
 
-Therefore Mix Recorder is **not** classified as a current fault or required-disable setting. The earlier recording-on/off comparison remains historical evidence of a workload confound, not proof that recording caused the problem.
+The accepted implementation also verified:
 
-### Spotlight guard check
+- protected `com.apple.universalaccess` writes require Full Disk Access;
+- effective state verification must use a fresh helper process to avoid stale AppKit cache reads;
+- `pgrep -x Traktor` is the reliable process detector used in production;
+- `AXInterfaceReduceMotionStatusDidChange` refreshes already-running listeners without the disruptive Dock restart tested earlier.
 
-The helper was directly observed detecting Traktor, saving the previous Spotlight indexing state and disabling indexing. Guy then repeated the Traktor start/stop cycle several times and reports that indexing is restored correctly after Traktor exits.
+Production source changes from accepted candidate v5 are limited to stable state/log paths and removal of candidate naming.
 
-### Causality boundary
+## Causality boundary
 
-Several changes were made before the final successful configuration. The evidence supports the **combined final configuration**, but does not prove that one single setting caused or fixed the earlier symptoms.
+Several runtime settings were changed during earlier diagnosis. The evidence supports the combined accepted configuration but does not prove that any one setting alone caused or fixed all earlier UI/audio symptoms.
 
-The v8.0.8 bounded catastrophic USB-recovery path also remains unexercised because the final tests did not reproduce the catastrophic zero-byte USB failure.
+The v8.0.8 bounded catastrophic USB-recovery path remains unexercised because the accepted tests did not reproduce the catastrophic zero-byte USB failure.
