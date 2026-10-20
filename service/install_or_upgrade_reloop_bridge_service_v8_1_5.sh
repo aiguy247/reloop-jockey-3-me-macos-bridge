@@ -90,8 +90,14 @@ rollback_on_error() {
   echo "Rollback attempt finished. Qualified v8.1.3 files were preserved."
 }
 
+signal_abort() {
+  echo
+  echo "Installation interrupted."
+  return 130
+}
+
 trap rollback_on_error ERR
-trap cleanup_tmp INT TERM HUP
+trap signal_abort INT TERM HUP
 
 [[ -d "$REPO_ROOT/.git" ]] || fail "This installer must be run from the permanent Git repository."
 CURRENT_BRANCH="$(/usr/bin/git -C "$REPO_ROOT" branch --show-current)"
@@ -100,6 +106,10 @@ CURRENT_BRANCH="$(/usr/bin/git -C "$REPO_ROOT" branch --show-current)"
 [[ -f "$SOURCE" ]] || fail "Missing v8.0.8 source: $SOURCE"
 [[ -f "$BUILD_SCRIPT" ]] || fail "Missing v8.0.8 build script: $BUILD_SCRIPT"
 [[ -f "$GUARD_SOURCE" ]] || fail "Missing Spotlight guard: $GUARD_SOURCE"
+
+if /usr/bin/pgrep -f "$BUILT_ENGINE" >/dev/null 2>&1; then
+  fail "A foreground v8.0.8 candidate is running from the repository build path. Stop it with Control-C before installing v8.1.5."
+fi
 
 /bin/bash -n "$GUARD_SOURCE"
 SOURCE_SHA="$(/usr/bin/shasum -a 256 "$SOURCE" | /usr/bin/awk '{print $1}')"
@@ -393,10 +403,10 @@ echo "Administrator approval is required once to install the root Spotlight guar
 /usr/bin/sudo /bin/mkdir -p "$ROOT_APP_DIR" "$ROOT_LOG_DIR"
 /usr/bin/sudo /usr/bin/install -o root -g wheel -m 755 "$GUARD_SOURCE" "$ROOT_GUARD"
 /usr/bin/sudo /usr/bin/install -o root -g wheel -m 644 "$ROOT_PLIST_TMP" "$ROOT_PLIST"
+GUARD_INSTALLED=1
 /usr/bin/sudo /bin/launchctl bootout system "$ROOT_PLIST" >/dev/null 2>&1 || true
 /usr/bin/sudo /bin/launchctl bootstrap system "$ROOT_PLIST"
 /usr/bin/sudo /bin/launchctl kickstart -k "system/$SPOTLIGHT_LABEL"
-GUARD_INSTALLED=1
 
 /usr/bin/sudo /bin/launchctl print "system/$SPOTLIGHT_LABEL" >/dev/null 2>&1 || fail "Spotlight guard LaunchDaemon did not load."
 
