@@ -1,61 +1,51 @@
 # Public-readiness audit
 
-Status: **audit complete; repository remains private pending explicit owner approval for a visibility change**.
+Status: **public repository; current v8.0.8 / v8.1.5 baseline approved for publication on 20 October 2026.**
 
-## Current-tree audit
+## Repository status
 
-Checked:
+The repository is public:
 
-- qualified Objective-C source;
+`aiguy247/reloop-jockey-3-me-macos-bridge`
+
+The owner explicitly approved promotion of the current live-tested baseline to the public current release.
+
+## Current-tree audit scope
+
+The publication set includes:
+
+- v8.0.8 Objective-C source and Phase 4 diagnostic/recovery history;
+- v8.1.5 service and Spotlight-helper source used on the original Mac;
 - five mapping-only Traktor exports;
-- service scripts;
-- documentation;
-- checksums and patch files.
+- mapping and source checksums;
+- qualification/runtime documentation;
+- engineering/test tooling.
 
-Results:
+The repository does not include runtime WAV recordings or the large local diagnostic logs used during qualification.
 
-- no passwords, API keys, private keys or access tokens identified;
-- no `/Users/guy` path found in the qualified source or five mapping-only exports;
-- the five mapping files contain only the expected top-level Traktor entries: `DeviceIO.Config.Controller`, `Flavour` and `Version`;
-- no full Traktor settings export remains on `main`;
-- no runtime logs, WAV recordings or diagnostic captures are stored in Git;
-- distribution ZIPs are ignored from Git history.
+## Mapping privacy
 
-## Reachable Git history
+The five files under `mapping/` are mapping-only Controller Manager exports.
 
-The reachable `main` and `v8.1.3` history exposes the sanitized qualified baseline with the five mapping-only Controller Manager exports.
+They do not contain global Traktor preferences, playlists or arbitrary user files.
 
-The former full Traktor settings commit was removed from normal branch/tag history. An old unreachable Git object may still be retrievable only if its exact SHA is already known. The owner has accepted that residual exposure; it is not a publication blocker.
-
-The public-facing repository must not link to or advertise that old object.
+The current Deck A/B mapping additions are documented separately and their exact mapping-file SHA-256 values are recorded in `checksums/MAPPING_ONLY_SHA256SUMS.txt`.
 
 ## Service/package portability
 
-The exact v8.1.3 service scripts are qualification provenance, not a public installer.
+The current v8.1.5 installer is the exact upgrade script used on the original qualified Mac.
 
-Known local assumptions include:
+It includes original-environment assumptions, particularly the requirement to preserve the pre-existing v8.1.3 runtime before replacement.
 
-- launchd label `com.guy.reloopbridge`;
-- historical project path `$HOME/Documents/reloop-controller`;
-- package layout expecting source under `dev/`;
-- status helper matching a v8.0.3 process name while reporting v8.0.4;
-- status helper tailing a v8.1.2 log while reporting v8.1.3.
+Therefore publication of the source does **not** mean it is advertised as a universal one-click installer.
 
-This is **not a repository-publication blocker** because no general installer or Release ZIP is planned. The rule is simply: do not publish the historical v8.1.3 package as a reusable installer.
-
-## Mapping portability
-
-The five files under `mapping/` are mapping-only exports, not full Traktor settings.
-
-They still include project workflow preferences. The bridge-specific integration and the optional workflow customizations are distinguished in the documentation.
-
-This is not a publication blocker, but public users should not be told the entire mapping is required for the bridge.
+See `docs/INSTALLATION.md`.
 
 ## Author identity
 
 Public Git author name is intentionally **Guy R. Hood**.
 
-Reachable commits use Guy R. Hood with the GitHub noreply email associated with the account. No author-history rewrite is required.
+The repository uses the GitHub noreply address associated with the account.
 
 ## License
 
@@ -65,25 +55,20 @@ Copyright holder:
 
 `Guy R. Hood`
 
-See `LICENSE`.
-
 ## Third-party scope
 
-The repository does not bundle Traktor, BlackHole, controller firmware, or a vendor driver binary.
+The repository does not bundle Traktor, BlackHole, Reloop firmware or a vendor driver binary.
 
 The project is independent and unaffiliated with Reloop, Native Instruments or the BlackHole project. Product names are used only to describe compatibility.
 
-## Publication checklist
+## Current publication boundary
 
-Completed:
+The public baseline records exactly what was tested and what remains unproven.
 
-- author identity confirmed as Guy R. Hood;
-- MIT license added;
-- repository scope clearly documented as source + mappings + engineering documentation;
-- no general public installer or Release ZIP planned;
-- final secret/privacy review completed on 17 Oct 2026;
-- final README/install documentation smoke review completed on 17 Oct 2026.
+In particular:
 
-Remaining gate:
-
-- explicit owner approval before changing repository visibility.
+- normal v8.0.8/v8.1.5 operation is live-tested;
+- Mix Recorder works in the final configuration;
+- Spotlight automatic disable/restore is live-confirmed;
+- the bounded catastrophic USB recovery path remains unexercised in a reproduced catastrophic failure;
+- other Macs/macOS/controller revisions are not claimed as qualified.

@@ -1,34 +1,59 @@
 # Service scripts — qualification provenance
 
-The scripts in this directory are the exact service-side artifacts preserved from the **v8.1.3 private qualification environment**.
+This directory contains both the historical v8.1.3 service artifacts and the current v8.1.5 service/helper artifacts used on the original qualified Mac.
 
-They are **not a general public installer**.
+They are **qualification provenance**, not a universal public installer.
 
-## Why they are preserved
+## Current original-Mac runtime
 
-Keeping them unchanged records exactly how the qualified long-running service was installed and supervised.
+Current service/package:
 
-## Known local assumptions
+**v8.1.5**
 
-The installer uses:
+Current engine:
+
+**v8.0.8**
+
+LaunchAgent:
+
+`com.guy.reloopbridge`
+
+Spotlight LaunchDaemon:
+
+`com.guy.reloopbridge.spotlightguard`
+
+Current files:
+
+- `install_or_upgrade_reloop_bridge_service_v8_1_5.sh`
+- `reloop_bridge_service_status_v8_1_5.sh`
+- `reloop_spotlight_guard_v8_1_5.sh`
+- `rollback_to_v8_1_3_from_v8_1_5.sh`
+
+The v8.1.5 upgrade was installed and live-tested on the original Mac. The Spotlight helper's Traktor start/stop behavior was also live-confirmed repeatedly.
+
+## v8.1.5 portability boundary
+
+The v8.1.5 upgrade script deliberately preserves the original Mac's existing v8.1.3 runtime before replacement. It therefore assumes those v8.1.3 files exist.
+
+That makes it appropriate as the exact qualified upgrade record for the original Mac, but not as a fresh installer for an arbitrary machine.
+
+## Historical v8.1.3 files
+
+The older v8.1.3 scripts remain preserved for provenance.
+
+Known historical local assumptions include:
 
 - launchd label `com.guy.reloopbridge`;
 - historical working path `$HOME/Documents/reloop-controller`;
 - package source layout under `dev/`.
 
-Those values are specific to the original setup.
+The old v8.1.3 status helper also has historical reporting-path mistakes:
 
-## Known status-helper mistakes
+- it looks for a v8.0.3 process while displaying v8.0.4;
+- it tails a v8.1.2 log while displaying v8.1.3.
 
-`reloop_bridge_service_status_v8_1_3.sh` contains two historical version references that should not be copied into a future portable package:
-
-- process lookup uses `reloop_bridge_engine_v8_0_3` while the display says v8.0.4;
-- recent-log lookup uses `reloop_v8_1_2_service.log` while the display says v8.1.3.
-
-The qualified bridge engine itself is v8.0.4. These are status/reporting-script defects, not evidence that the qualified engine was v8.0.3.
+Those are status-script defects, not evidence that the qualified engine version was different.
 
 ## Public package rule
 
-Do not “clean up” these exact provenance files and then describe them as the same qualified package.
-
-A future reusable service package should use generic identifiers/paths, correct status checks, and then receive its own structural and live-hardware qualification.
+A future fresh-machine installer should be separately implemented and qualified. Do not “clean up” one of these provenance scripts and call it the same qualified package without another test pass.
