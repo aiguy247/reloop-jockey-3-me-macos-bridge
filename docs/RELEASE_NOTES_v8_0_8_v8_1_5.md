@@ -44,11 +44,14 @@ Deck A and B now include the live-confirmed physical RELOOP-button Low Kill inpu
 
 Deck B also adds four live-confirmed `Slot Retrigger` inputs so XFA–XFD trigger Deck D Remix slots 1–4 while Deck B remains selected.
 
+The final Deck A/B mapping revision also swaps the FX Unit 4 button assignment with the Browser/Load assignment for better playing accessibility. FX Unit 4 IN/OUT moves from `E-1` to `G#-1`; Only Browser On + Load Selected moves from `G#-1` to `E-1` on each deck's MIDI channel.
+
 See:
 
 - `docs/CURRENT_MAPPING_SPEC.md`
 - `docs/MAPPING_UPDATE_2026-10-19_LOW_KILL.md`
 - `docs/MAPPING_UPDATE_2026-10-20_DECK_B_SAMPLE_RETRIGGER.md`
+- `docs/MAPPING_UPDATE_2026-10-20_FX4_BROWSER_LOAD_SWAP.md`
 
 ## Final live result
 
