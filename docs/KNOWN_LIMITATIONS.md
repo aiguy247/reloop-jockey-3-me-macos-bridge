@@ -6,56 +6,40 @@ Earlier Phase 4 testing reproduced a rare catastrophic bidirectional USB failure
 
 v8.0.8 adds a bounded warm-recovery path for that failure class.
 
-The final accepted v8.0.8/v8.1.5 tests did **not** reproduce the catastrophic event, so the new recovery path was never exercised.
-
-Therefore:
-
-- normal v8.0.8 operation is live-tested;
-- the catastrophic recovery algorithm is structurally implemented;
-- its ability to recover the physical controller from that exact failure remains unproven.
+The accepted v8.0.8/v8.1.5/v8.1.6 normal-operation tests did **not** reproduce the catastrophic event, so the new recovery path remains unexercised on hardware.
 
 ## Earlier pops / UI glitches
 
 Earlier stress tests produced audible pops, short interruptions and Traktor UI glitches, especially during macOS Spaces/window activity.
 
-Some of those audible problems occurred with:
-
-- zero BlackHole frame drops;
-- zero playback underruns;
-- zero USB transfer errors.
-
-That means the measured bridge USB/buffer counters did not explain every audible symptom.
-
-The final combined configuration — including Multi-Core Processing OFF, 384-sample buffer, Spotlight controls and Reduce Motion — no longer reproduces those symptoms in Guy's current testing.
-
-Do not rewrite the historical evidence as if one individual change were proven causal.
+The final combined configuration no longer reproduces those symptoms in Guy's current testing. Do not rewrite the historical evidence as if one individual change were proven causal.
 
 ## Mix Recorder
 
-Mix Recorder is **not a current known limitation**.
-
-It was an extra workload variable in earlier comparisons, but final testing with recording active, Chrome open and ChatGPT open was clean according to Guy.
+Mix Recorder is **not a current known limitation**. Final testing with recording active and other applications open was clean according to Guy.
 
 ## Spotlight helper
 
-The v8.1.5 helper controls Spotlight filesystem indexing through `mdutil`.
+The retained v8.1.5 helper controls Spotlight filesystem indexing through `mdutil`. It deliberately does not kill `mds`, `fileproviderd`, iCloud services or unrelated applications.
 
-It does not disable all macOS metadata/search-related services and deliberately does not kill `mds`, `fileproviderd`, iCloud services or unrelated applications.
+## Reduce Motion helper
+
+The v8.1.6 helper requires a one-time Full Disk Access grant on the qualified Sonoma system.
+
+Its accepted refresh path restarts the user preference/accessibility daemons `cfprefsd` and `universalaccessd`, then broadcasts `AXInterfaceReduceMotionStatusDidChange`.
+
+It does **not** restart Dock or Finder. A Dock restart was explicitly rejected after testing showed it can disturb Spaces/window arrangement.
+
+The helper is live-qualified only on the documented Sonoma 14.8.9 original Mac. Other macOS releases may handle the protected preference or notification differently.
 
 ## Broad Spotlight Privacy exclusions
 
-The original qualified Mac uses broad exclusions under `~/Library` plus Traktor/project/recording paths.
-
-Those settings reduce Spotlight coverage and are recorded as the test-Mac configuration, not as a universal requirement for every user.
+The original qualified Mac uses broad exclusions under `~/Library` plus Traktor/project/recording paths. Those settings reduce Spotlight coverage and are recorded as the test-Mac configuration, not as a universal requirement.
 
 ## Analog-output proof
 
 A clean Traktor recording cannot by itself prove clean Reloop analog output because the recorder is upstream of BlackHole -> bridge -> USB -> Reloop DAC.
 
-The final acceptance includes Guy's direct listening/use observation, but laboratory end-to-end proof would require independently recording the physical Reloop analog output.
-
 ## Platform scope
 
-The live-tested OS evidence is macOS Sonoma 14.8.9 on Apple Silicon with the hardware/configuration documented in `COMPATIBILITY.md`.
-
-Other macOS releases, Intel Macs, other firmware revisions and other Jockey models may work, but are not claimed as qualified without hardware evidence.
+The live-tested OS evidence is macOS Sonoma 14.8.9 on Apple Silicon with the documented hardware/configuration. Other macOS releases, Intel Macs, firmware revisions and Jockey models are not claimed as qualified without hardware evidence.

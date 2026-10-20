@@ -4,11 +4,11 @@
 
 1. **Structural** — source, scripts or mappings are internally valid.
 2. **Runtime** — logs show the software path behaving correctly.
-3. **Live hardware** — the physical controller behaves correctly in Traktor.
+3. **Live hardware** — the physical controller/macOS behavior is confirmed directly.
 
 Only level 3 qualifies controller behavior.
 
-## Minimum build test
+## Minimum engine build test
 
 - Verify source SHA-256.
 - Compile without errors.
@@ -28,10 +28,23 @@ Only level 3 qualifies controller behavior.
 
 - Deck A/B transport controls respond.
 - Non-master Play/Pause LEDs behave normally.
-- Deck A actual Tempo Master: A trash + Play/Pause LEDs flash with Beat Phase.
-- Deck B actual Tempo Master: behavior follows B.
-- AUTO/Cruise master movement follows the actual Traktor master.
-- Leaving master state restores the deck's normal Play/Pause LED state.
+- Actual Tempo Master trash + Play/Pause LEDs flash with Beat Phase.
+- Leaving master state restores normal Play/Pause LED state.
+
+## v8.1.6 helper smoke test
+
+With Traktor closed and Reduce Motion OFF:
+
+1. confirm `com.guy.reloopbridge.reducemotionguard` is loaded;
+2. start Traktor;
+3. within a few seconds confirm Reduce Motion is ON;
+4. confirm Spotlight indexing is disabled;
+5. close Traktor;
+6. confirm Reduce Motion returns to OFF;
+7. confirm normal Spaces/desktop sliding motion returns without restarting Dock;
+8. confirm Spotlight indexing returns to its saved pre-Traktor state.
+
+Repeat with Reduce Motion already ON before Traktor; it should remain ON after Traktor exits.
 
 ## Mapping validation
 
@@ -41,13 +54,4 @@ A parser pass does not replace live testing.
 
 ## Long-run stability
 
-For qualification-level changes, use a multi-hour playback session and preserve the shutdown counters/logs. Review at least:
-
-- BlackHole dropped frames;
-- playback underruns;
-- playback transfer errors;
-- synchronous USB write duration;
-- catch-up events;
-- CoreMIDI OUT drops.
-
-A recovered transport stall is still recorded as a stall. Do not turn it into a “no issue” result merely because buffering recovered.
+For qualification-level engine changes, use a multi-hour playback session and preserve the shutdown counters/logs. Review BlackHole drops, playback underruns, USB errors/duration, catch-up events and CoreMIDI OUT drops.

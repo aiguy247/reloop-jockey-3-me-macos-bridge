@@ -21,7 +21,10 @@ The bridge talks directly to the controller over USB, exposes a CoreMIDI endpoin
 | Component | Current version / setting |
 |---|---|
 | Bridge engine | **v8.0.8** |
-| Service/package on the qualified Mac | **v8.1.5** |
+| Service/package on the qualified Mac | **v8.1.6** |
+| Bridge supervisor component | **v8.1.5 (unchanged)** |
+| Spotlight guard component | **v8.1.5 (unchanged)** |
+| Reduce Motion guard | **v8.1.6** |
 | Traktor observed | **3.11.1.17** |
 | Tested OS | **macOS Sonoma 14.8.9, Apple Silicon** |
 | Controller firmware observed | **1.0.6** |
@@ -36,7 +39,7 @@ Engine source SHA-256:
 
 The final configuration has been live-tested repeatedly on the physical controller. Guy reports smooth UI operation, normal mixing and recording, and no pops, crackling or audio dropouts in the final tests, including with Chrome and ChatGPT open.
 
-See `docs/QUALIFIED_RUNTIME_SETTINGS_v8_1_5.md` and `docs/QUALIFICATION.md`.
+See `docs/QUALIFIED_RUNTIME_SETTINGS_v8_1_6.md` and `docs/QUALIFICATION.md`.
 
 ## What the bridge does
 
@@ -50,23 +53,33 @@ See `docs/QUALIFIED_RUNTIME_SETTINGS_v8_1_5.md` and `docs/QUALIFICATION.md`.
 - Restores normal Play/Pause LED state when master status moves away.
 - v8.0.8 adds Phase 4 USB/MIDI diagnostics and a bounded recovery path for the catastrophic zero-byte USB failure class.
 
-The bounded catastrophic-recovery path has **not yet been exercised in a reproduced catastrophic event**. Do not interpret the successful normal-operation qualification as proof of that specific recovery path.
+The bounded catastrophic-recovery path has **not yet been exercised in a reproduced catastrophic event**. Do not interpret successful normal-operation qualification as proof of that specific recovery path.
 
-## v8.1.5 Spotlight guard
+## Automatic Traktor-time macOS controls
 
-The qualified Mac runs a separate root LaunchDaemon:
+### Spotlight
+
+The qualified Mac retains the v8.1.5 root LaunchDaemon:
 
 `com.guy.reloopbridge.spotlightguard`
 
+It remembers the previous Spotlight indexing state, disables filesystem indexing while Traktor runs, and restores the previous state after Traktor exits.
+
+### Reduce Motion — new in v8.1.6
+
+v8.1.6 adds a per-user LaunchAgent:
+
+`com.guy.reloopbridge.reducemotionguard`
+
 It:
 
-- detects when Traktor starts;
-- remembers the previous Spotlight indexing state;
-- disables filesystem indexing for the startup volume while Traktor runs;
-- restores the previous state after Traktor exits;
-- does not kill Spotlight, iCloud, FileProvider or application processes.
+- records the effective Reduce Motion state before Traktor starts;
+- enables Reduce Motion while Traktor runs;
+- restores the exact previous state after Traktor exits;
+- refreshes already-running macOS UI listeners without restarting Dock or Finder;
+- requires a one-time Full Disk Access grant on the qualified Sonoma Mac.
 
-Guy verified the off/on transition repeatedly.
+The accepted candidate v5 behavior was live-confirmed before production promotion. The production helper uses the same control logic with stable paths and launchd supervision.
 
 ## Mapping scope
 
@@ -75,7 +88,7 @@ The five files under `mapping/` are **mapping-only exports**. They do not contai
 Current Deck A/B additions include:
 
 - RELOOP button -> Mixer Low Kill, including matching LED OUT;
-- Deck B XFA–XFD -> Deck D Remix slots 1–4 Slot Retrigger while Deck B remains selected.
+- Deck B XFA–XFD -> Deck D Remix slots 1–4 Slot Retrigger while Deck B remains selected;
 - Deck A/B FX Unit 4 versus Browser/Load physical-button assignments swapped for improved playing accessibility.
 
 The mappings also contain project workflow choices such as Favorites browsing, Recorder/Cruise assignments and Deck C/D behavior. Those choices are not requirements of the bridge itself.
@@ -89,29 +102,24 @@ src/        qualified and experimental Objective-C bridge source
 service/    exact service/helper artifacts used on the original qualified Mac
 mapping/    five current mapping-only Controller Manager exports
 patches/    source-level bridge diffs
-tools/      mapping and Phase 4 diagnostic tooling
+tools/      mapping, Phase 4 diagnostic and release tooling
 docs/       setup, qualification, release and engineering documentation
 checksums/  SHA-256 records
 ```
 
 ## Installation scope
 
-This public repository is **source + mappings + engineering documentation**.
+This public repository is **source + mappings + engineering documentation** plus the v8.1.6 release package for the original qualified Mac.
 
-The current v8.1.5 service scripts record the exact installation used on the original test Mac, including rollback assumptions from its earlier v8.1.3 installation. They are **not presented as a universal one-click installer for arbitrary Macs**.
+The v8.1.6 release asset upgrades the existing v8.1.5 qualified environment. It is **not a universal fresh-machine installer**.
 
-For source build and controlled testing, see:
-
-- `docs/BUILD.md`
-- `docs/INSTALLATION.md`
-- `docs/TRAKTOR_SETUP.md`
-- `docs/TESTING.md`
+For details, see `docs/INSTALLATION.md`.
 
 ## Current release notes
 
 See:
 
-`docs/RELEASE_NOTES_v8_0_8_v8_1_5.md`
+`docs/RELEASE_NOTES_v8_0_8_v8_1_6.md`
 
 ## Engineering rule
 
@@ -127,4 +135,3 @@ Licensed under the **MIT License**. See `LICENSE`.
 
 ![Reloop Jockey 3 ME](images/jockey-iii-me-dj-controller-front.jpg)
 ![Reloop Jockey 3 ME](images/jockey-iii-me-dj-controller-back.jpg)
-

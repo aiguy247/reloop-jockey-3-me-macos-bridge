@@ -1,0 +1,61 @@
+name: Release v8.1.6
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/release-v8.1.6.yml'
+      - 'service/install_or_upgrade_reloop_bridge_service_v8_1_6.sh'
+      - 'service/rollback_to_v8_1_5_from_v8_1_6.sh'
+      - 'service/reloop_bridge_service_status_v8_1_6.sh'
+      - 'service/reloop_reduce_motion_guard_v8_1_6.m'
+      - 'docs/GITHUB_RELEASE_v8_1_6.md'
+      - 'docs/RELEASE_PACKAGE_README_v8_1_6.md'
+      - 'docs/RELEASE_NOTES_v8_0_8_v8_1_6.md'
+      - 'tools/release/build_release_package_v8_1_6.py'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out release commit
+        uses: actions/checkout@v4
+
+      - name: Validate shell scripts
+        run: |
+          bash -n service/install_or_upgrade_reloop_bridge_service_v8_1_6.sh
+          bash -n service/rollback_to_v8_1_5_from_v8_1_6.sh
+          bash -n service/reloop_bridge_service_status_v8_1_6.sh
+
+      - name: Build deterministic release package
+        run: python3 tools/release/build_release_package_v8_1_6.py
+
+      - name: Create GitHub release and upload assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG="v8.1.6"
+          ZIP="dist/Reloop_Jockey_3_ME_Bridge_v8_1_6.zip"
+          SHA="dist/Reloop_Jockey_3_ME_Bridge_v8_1_6.zip.sha256"
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists; leaving it unchanged."
+            exit 0
+          fi
+
+          cp docs/GITHUB_RELEASE_v8_1_6.md /tmp/release-notes.md
+          printf '\n## Release asset SHA-256\n\n```text\n' >> /tmp/release-notes.md
+          cat "$SHA" >> /tmp/release-notes.md
+          printf '```\n' >> /tmp/release-notes.md
+
+          gh release create "$TAG" \
+            "$ZIP" \
+            "$SHA" \
+            --target "$GITHUB_SHA" \
+            --title "Reloop Jockey 3 ME macOS Bridge v8.1.6" \
+            --notes-file /tmp/release-notes.md

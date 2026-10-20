@@ -1,6 +1,6 @@
 # Public-readiness audit
 
-Status: **public repository; current v8.0.8 / v8.1.5 baseline approved for publication on 20 October 2026.**
+Status: **public repository; current v8.0.8 / v8.1.6 baseline approved for publication on 20 October 2026.**
 
 ## Repository status
 
@@ -8,20 +8,21 @@ The repository is public:
 
 `aiguy247/reloop-jockey-3-me-macos-bridge`
 
-The owner explicitly approved promotion of the current live-tested baseline to the public current release.
+The owner explicitly approved promotion of the accepted v8.1.6 Reduce Motion behavior and creation of the GitHub release.
 
 ## Current-tree audit scope
 
 The publication set includes:
 
 - v8.0.8 Objective-C source and Phase 4 diagnostic/recovery history;
-- v8.1.5 service and Spotlight-helper source used on the original Mac;
+- retained v8.1.5 bridge/Spotlight provenance;
+- v8.1.6 Reduce Motion helper source and original-Mac upgrade tooling;
 - five mapping-only Traktor exports;
 - mapping and source checksums;
 - qualification/runtime documentation;
-- engineering/test tooling.
+- engineering/test/release tooling.
 
-The repository does not include runtime WAV recordings or the large local diagnostic logs used during qualification.
+The release workflow builds the v8.1.6 ZIP as a GitHub Release asset rather than committing the binary ZIP to Git history.
 
 ## Mapping privacy
 
@@ -29,17 +30,17 @@ The five files under `mapping/` are mapping-only Controller Manager exports.
 
 They do not contain global Traktor preferences, playlists or arbitrary user files.
 
-The current Deck A/B mapping additions are documented separately and their exact mapping-file SHA-256 values are recorded in `checksums/MAPPING_ONLY_SHA256SUMS.txt`.
-
 ## Service/package portability
 
-The current v8.1.5 installer is the exact upgrade script used on the original qualified Mac.
+The v8.1.6 release package is an upgrade for the original qualified Mac. It expects the existing v8.1.5 environment and repository path.
 
-It includes original-environment assumptions, particularly the requirement to preserve the pre-existing v8.1.3 runtime before replacement.
+It is explicitly **not** described as a universal one-click fresh installer.
 
-Therefore publication of the source does **not** mean it is advertised as a universal one-click installer.
+## Permission disclosure
 
-See `docs/INSTALLATION.md`.
+The v8.1.6 Reduce Motion helper requires Full Disk Access on the qualified Sonoma system because it writes the protected `com.apple.universalaccess` preference.
+
+The installer checks this before changing the running bridge state.
 
 ## Author identity
 
@@ -47,28 +48,16 @@ Public Git author name is intentionally **Guy R. Hood**.
 
 The repository uses the GitHub noreply address associated with the account.
 
-## License
+## License / third-party scope
 
-The repository uses the **MIT License**.
+The repository uses the **MIT License** and does not bundle Traktor, BlackHole, Reloop firmware or a vendor driver binary.
 
-Copyright holder:
-
-`Guy R. Hood`
-
-## Third-party scope
-
-The repository does not bundle Traktor, BlackHole, Reloop firmware or a vendor driver binary.
-
-The project is independent and unaffiliated with Reloop, Native Instruments or the BlackHole project. Product names are used only to describe compatibility.
+The project is independent and unaffiliated with Reloop, Native Instruments or the BlackHole project.
 
 ## Current publication boundary
 
-The public baseline records exactly what was tested and what remains unproven.
-
-In particular:
-
-- normal v8.0.8/v8.1.5 operation is live-tested;
-- Mix Recorder works in the final configuration;
+- normal v8.0.8/v8.1.5 bridge operation is live-tested;
 - Spotlight automatic disable/restore is live-confirmed;
-- the bounded catastrophic USB recovery path remains unexercised in a reproduced catastrophic failure;
+- v8.1.6 Reduce Motion behavior was live-confirmed as candidate v5 before promotion;
+- the v8.0.8 catastrophic USB recovery path remains unexercised in a reproduced catastrophic failure;
 - other Macs/macOS/controller revisions are not claimed as qualified.
