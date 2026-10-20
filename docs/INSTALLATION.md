@@ -2,29 +2,46 @@
 
 ## Public repository scope
 
-The current public baseline is **engine v8.0.8 + service v8.1.5 source + mappings + documentation**.
+The current public baseline is **engine v8.0.8 + service/package v8.1.6 + mappings + documentation**.
 
-The repository does **not** currently present the v8.1.5 service script as a universal one-click installer for arbitrary Macs.
+GitHub Release v8.1.6 includes a ZIP upgrade package for the **original qualified Mac**.
 
-## Why the v8.1.5 installer is not universal
+It is not a universal fresh-machine installer.
 
-`service/install_or_upgrade_reloop_bridge_service_v8_1_5.sh` is the exact installer used to upgrade the original test Mac.
+## v8.1.6 upgrade package
 
-Its safety design intentionally expects that Mac's existing v8.1.3 runtime so it can preserve:
+The release package expects the original Mac's existing v8.1.5 environment and project repository path.
 
-- the previous v8.1.3 LaunchAgent;
-- the v8.0.4 engine;
-- the v8.1.3 supervisor;
+It deliberately keeps these already-qualified components unchanged:
 
-before replacing them.
+- bridge engine v8.0.8;
+- v8.1.5 bridge supervisor component;
+- v8.1.5 root Spotlight guard.
 
-It also installs a root LaunchDaemon for Spotlight control, so administrator approval is required.
+It adds:
 
-That behavior is useful qualification provenance but is not a clean fresh-install path for another machine.
+- `com.guy.reloopbridge.reducemotionguard`;
+- production helper `~/Library/Application Support/ReloopBridge/reloop_reduce_motion_guard_v8_1_6`.
+
+The installer automatically stops any remaining v8.1.6 test candidate and restores the existing v8.1.5 bridge under launchd before enabling the production helper.
+
+## Full Disk Access requirement
+
+The Reduce Motion helper changes the protected `com.apple.universalaccess` preference. On the qualified Sonoma system, the helper executable therefore needs a one-time Full Disk Access grant.
+
+The installer compiles the helper to its final production path and tests permission **before** stopping the candidate or installed bridge service.
+
+If permission is missing, it opens the Full Disk Access pane and exits safely. Add the exact path printed by the installer, enable it, and rerun the installer.
+
+## Rollback
+
+`service/rollback_to_v8_1_5_from_v8_1_6.sh` removes only the new v8.1.6 Reduce Motion helper/LaunchAgent.
+
+It leaves the v8.0.8 engine and v8.1.5 Spotlight guard intact and ensures the v8.1.5 bridge LaunchAgent is loaded.
 
 ## Controlled manual source run
 
-For engineering evaluation:
+For engineering evaluation of the engine itself:
 
 1. Build v8.0.8 using `docs/BUILD.md`.
 2. Install/configure BlackHole 16ch separately.
@@ -32,37 +49,8 @@ For engineering evaluation:
 4. Connect the Reloop Jockey 3 ME.
 5. Run the built engine in the foreground.
 
-For the repository build script:
-
-```bash
-./build/reloop_bridge_engine_v8_0_8_phase4_recovery_diagnostics
-```
-
-Stop it with Control-C.
-
 The foreground bridge engine itself does not require `sudo`.
-
-## Original qualified Mac
-
-The original Mac runs:
-
-- per-user LaunchAgent: `com.guy.reloopbridge`;
-- engine: v8.0.8;
-- service wrapper: v8.1.5;
-- root LaunchDaemon: `com.guy.reloopbridge.spotlightguard`.
-
-The Spotlight helper requires root privileges because it controls filesystem indexing through `mdutil`.
 
 ## Future portable installer
 
-A fresh-machine installer should be a separate artifact. It should:
-
-- support installation when no previous bridge version exists;
-- use generic package-relative source paths;
-- install/uninstall the root Spotlight helper safely;
-- preserve and restore pre-existing Spotlight state;
-- avoid touching unrelated LaunchAgents/LaunchDaemons;
-- validate mappings/checksums;
-- receive its own structural and live-hardware qualification.
-
-Do not relabel the original-Mac v8.1.5 upgrade script as that future portable installer without testing it.
+A true fresh-machine installer should be a separate artifact. It should support installation when no previous bridge version exists, install BlackHole prerequisites clearly, install/uninstall both helpers safely, and receive its own qualification.
