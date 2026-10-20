@@ -1,6 +1,6 @@
 # Mapping update — A/B RELOOP button Low Kill — 2026-10-19
 
-Status: **current user-exported A/B mapping state; Low Kill input and physical RELOOP-button LED OUT behavior live-confirmed by Guy. Not yet promoted to `main`.**
+Status: **live-confirmed mapping update incorporated into the v8.1.5 current baseline.**
 
 Guy manually added Mixer Low Kill to the physical RELOOP button on Deck A and Deck B in Traktor Controller Manager, including an OUT row intended to drive the same button LED, then exported each device separately.
 
@@ -69,8 +69,11 @@ The Deck B export also contains two Direction + Command ID + MIDI-binding rows t
 
 Command 100 is the existing Play/Pause command in the project mappings. Guy confirmed these two rows are intentional existing mappings and should be retained. Their exact historical purpose should not be rewritten as part of the Low Kill change without separate evidence. The two previously documented unbound Deck B command-365 OUT records remain present, which is why the Deck B export has 146 commands but 144 bindings.
 
-## Qualification boundary
+## Qualification result
 
-The prior full mapping checkpoint remains the last full-export baseline, but the new Deck A/B Low Kill mappings and their RELOOP-button LED OUT behavior are now live-confirmed by Guy.
+Guy live-confirmed the Deck A/B Low Kill input and physical RELOOP-button LED OUT behavior.
 
-Do not overwrite the qualified mapping-only files on `main` from these exports merely because the structural audit passes.
+For the v8.1.5 baseline:
+
+- the Deck A export in this document became the current `mapping/Jockey_3_Deck_A.tsi`;
+- Deck B subsequently received four additional live-confirmed Slot Retrigger mappings, so the **newer** Deck B export documented in `MAPPING_UPDATE_2026-10-20_DECK_B_SAMPLE_RETRIGGER.md` is the current `mapping/Jockey_3_Deck_B.tsi`.
