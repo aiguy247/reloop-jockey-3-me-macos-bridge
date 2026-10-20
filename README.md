@@ -1,5 +1,17 @@
 # Reloop Jockey 3 ME macOS Bridge
 
+<table>
+  <tr>
+    <td>
+      <img src="images/jockey-iii-me-dj-controller-top.jpg" width="450">
+    </td>
+    <td>
+      <img src="images/jockey-iii-me-dj-controller-front.jpg" width="400"><br>
+      <img src="images/jockey-iii-me-dj-controller-back.jpg" width="400">
+    </td>
+  </tr>
+</table>
+
 A reverse-engineered macOS audio + bidirectional MIDI bridge for the **Reloop Jockey 3 ME**, with live-tested Traktor Controller Manager mappings.
 
 The bridge talks directly to the controller over USB, exposes a CoreMIDI endpoint to Traktor, and routes Traktor audio through BlackHole to the Jockey 3 ME at 48 kHz.
@@ -112,3 +124,7 @@ Structural validation, runtime evidence and live hardware qualification are kept
 The repository is public. The public-readiness record is in `docs/PUBLIC_READINESS.md`.
 
 Licensed under the **MIT License**. See `LICENSE`.
+
+![Reloop Jockey 3 ME](images/jockey-iii-me-dj-controller-front.jpg)
+![Reloop Jockey 3 ME](images/jockey-iii-me-dj-controller-back.jpg)
+
