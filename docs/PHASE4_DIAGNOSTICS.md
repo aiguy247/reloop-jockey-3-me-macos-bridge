@@ -1,21 +1,23 @@
 # Phase 4 - diagnostic development
 
-Status: **development candidate only; not qualified**.
+Status: **historical development and qualification record.**
 
-The qualified baseline remains **engine v8.0.4 / service v8.1.3** on `main`.
+Phase 4 began from the qualified **v8.0.4 / v8.1.3** baseline. After the testing recorded below, Guy accepted **engine v8.0.8 / service v8.1.5** as the current running baseline on 20 October 2026.
+
+The sections below preserve the state and conclusions at each point in the investigation. Statements that a version was a “candidate” describe its status **at that time**; see **Final Phase 4 outcome** at the end for the current conclusion.
 
 ## Scope
 
-Phase 4 is limited to:
+Phase 4 covered:
 
-- separate development branch;
+- separate development-branch work before promotion;
 - improved USB/MIDI logging;
 - better error-vs-timeout diagnostics;
 - USB stall correlation;
 - diagnostic PCM capture before USB submission;
 - hub A/B testing;
-- new candidate versions;
-- nothing reaches `main` until qualified.
+- candidate versions and bounded recovery;
+- promotion only after live acceptance.
 
 ## First Phase 4 candidate
 
