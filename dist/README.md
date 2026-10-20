@@ -1,19 +1,20 @@
 # Distribution status
 
-Binary installation ZIPs should be published as **GitHub Release assets**, not committed to Git history.
+Binary/release ZIPs are published as **GitHub Release assets**, not committed to Git history.
 
-## v8.1.3 qualification artifact
+## v8.1.6 release asset
 
-The exact package used in the private qualified setup is:
+The repository contains deterministic release tooling:
 
-`Reloop_Controller_Bridge_v8_1_3.zip`
+`tools/release/build_release_package_v8_1_6.py`
 
-- Service/package: **v8.1.3**
-- Engine: **v8.0.4**
-- SHA-256: `5255a15b3f9062b6df068daa0f118079306e8e6a5e3ac6e408612bac074aa908`
+The GitHub release workflow builds and publishes:
 
-This ZIP is retained outside Git as qualification provenance.
+- `Reloop_Jockey_3_ME_Bridge_v8_1_6.zip`
+- `Reloop_Jockey_3_ME_Bridge_v8_1_6.zip.sha256`
 
-It should **not** be published as the general public installer because its service wrapper contains local project assumptions. See `service/README.md`.
+The package is the upgrade artifact for the **original qualified Mac**. It expects the existing v8.1.5 environment and is not a universal fresh-machine installer.
 
-No public installer package is currently planned. If that changes later, any new portable package must receive its own qualification before release.
+## Historical v8.1.3 qualification artifact
+
+The older private qualification ZIP `Reloop_Controller_Bridge_v8_1_3.zip` remains historical provenance and should not be presented as the current public installer.
