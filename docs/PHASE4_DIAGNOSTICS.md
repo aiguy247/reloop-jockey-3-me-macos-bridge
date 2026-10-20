@@ -471,3 +471,21 @@ Post-test snapshot:
 - Hama topology remained Genesys Logic USB2.1 hub VID:PID 05e3:0610 version 6.56, with the Reloop at 480 Mb/s.
 
 Qualification interpretation: v8.0.8 passes the short functional/hardware smoke test. Its new bounded warm-recovery mechanism remains **unqualified**, because this run did not reproduce a zero-byte playback failure and therefore never exercised recovery.
+
+
+### v8.1.5 service candidate — v8.0.8 + Spotlight guard
+
+Status: **implemented on `phase4-diagnostics`; not yet installed or hardware-qualified at the time of this entry.**
+
+Purpose:
+
+- run the Phase 4 v8.0.8 engine under the normal per-user login LaunchAgent;
+- add a separate root LaunchDaemon that disables Spotlight filesystem indexing while the `Traktor` process is running and restores the pre-Traktor indexing state afterward;
+- keep Spotlight control outside the real-time audio/MIDI engine;
+- preserve the installed v8.1.3/v8.0.4 runtime for rollback before replacement.
+
+The guard uses `mdutil -i off /` / `mdutil -i on /`. It does not kill `mds`, `fileproviderd`, iCloud processes, browsers, ChatGPT/Codex, or other applications.
+
+No standalone cloud-drive client was present in the process snapshot supplied by Guy, so v8.1.5 does not add automatic cloud-app shutdown.
+
+See `docs/V8_1_5_SPOTLIGHT_GUARD.md` and the v8.1.5 service scripts.
