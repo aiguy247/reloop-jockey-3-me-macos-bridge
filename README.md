@@ -23,12 +23,12 @@ The bridge talks directly to the controller over USB, exposes a CoreMIDI endpoin
 | Bridge engine | **v8.0.8** |
 | Service/package on the qualified Mac | **v8.1.5** |
 | Traktor observed | **3.11.1.17** |
-| Audio buffer | **384 samples** |
+| Tested OS | **macOS Sonoma 14.8.9, Apple Silicon** |
+| Controller firmware observed | **1.0.6** |
+| Traktor audio buffer size | **384** |
 | Traktor Multi-Core Processing | **OFF** |
 | Traktor mapping | **Five mapping-only Controller Manager exports** |
 | Mapping checksums | `checksums/MAPPING_ONLY_SHA256SUMS.txt` |
-| Tested OS | **macOS Sonoma 14.8.9, Apple Silicon** |
-| Controller firmware observed | **1.0.6** |
 
 Engine source SHA-256:
 
