@@ -51,6 +51,23 @@ Deck B:
 
 Guy live-confirmed both the Low Kill action and the physical RELOOP-button LED output on both decks.
 
+
+## Accessibility button swap — Deck A/B
+
+Guy swapped the physical assignments for FX Unit 4 On versus Browser/Load to make the controls easier to reach while DJing.
+
+Deck A:
+
+- FX Unit 4 On IN + OUT/LED: `Ch01.Note.G#-1` (previously `Ch01.Note.E-1`)
+- Only Browser On + Load Selected — Deck Common: `Ch01.Note.E-1` (previously `Ch01.Note.G#-1`)
+
+Deck B:
+
+- FX Unit 4 On IN + OUT/LED: `Ch02.Note.G#-1` (previously `Ch02.Note.E-1`)
+- Only Browser On + Load Selected — Deck Common: `Ch02.Note.E-1` (previously `Ch02.Note.G#-1`)
+
+This is a mapping-only ergonomics change. No bridge-engine or audio-path behavior changed.
+
 ## Project workflow choices
 
 These are part of the current mapping but are not requirements of the audio bridge.
@@ -78,6 +95,7 @@ Deck B:
 - FX2 -> next Favorite.
 - FX Select Advanced press `Ch01.Note.F1` -> Recorder Record/Stop `2056`, Toggle.
 - RELOOP -> Mixer Low Kill with matching LED OUT.
+- FX Unit 4 On IN/OUT -> `Ch01.Note.G#-1`; Only Browser On + Load Selected -> `Ch01.Note.E-1`.
 
 ### Deck B
 
@@ -91,6 +109,7 @@ Deck B:
 - FX Select Advanced press `Ch02.Note.F1` -> Cruise Mode On `8194`, Toggle.
 - FX Select 1 press -> no Recorder input.
 - RELOOP -> Mixer Low Kill with matching LED OUT.
+- FX Unit 4 On IN/OUT -> `Ch02.Note.G#-1`; Only Browser On + Load Selected -> `Ch02.Note.E-1`.
 - two intentional existing command `100` OUT bindings are retained at `Ch02.Note.F2` and `Ch02.Note.F#2`.
 - XFA -> Deck D Remix slot 1, Slot Retrigger, Hold -> `Ch02.Note.G0`.
 - XFB -> Deck D Remix slot 2, Slot Retrigger, Hold -> `Ch02.Note.G#0`.
@@ -134,3 +153,4 @@ The Deck B two-row command/binding difference is intentional: two command-365 OU
 
 - Low Kill additions: `docs/MAPPING_UPDATE_2026-10-19_LOW_KILL.md`
 - Deck B XFA–XFD sample triggers: `docs/MAPPING_UPDATE_2026-10-20_DECK_B_SAMPLE_RETRIGGER.md`
+- Deck A/B FX4 vs Browser/Load accessibility swap: `docs/MAPPING_UPDATE_2026-10-20_FX4_BROWSER_LOAD_SWAP.md`
