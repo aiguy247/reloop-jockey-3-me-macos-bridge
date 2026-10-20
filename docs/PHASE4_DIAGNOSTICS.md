@@ -509,3 +509,38 @@ Observed result:
 - rollback copy of the prior v8.1.3 runtime was preserved under `~/Library/Application Support/ReloopBridge/rollback_v8_1_3`.
 
 This confirms installation/startup only. The automatic Spotlight transition still requires live verification with Traktor start/stop, and hardware/audio behavior remains separately qualified.
+
+
+## Final Phase 4 outcome — accepted baseline, 20 October 2026
+
+Guy completed several final live tests after installing service/package v8.1.5 around engine v8.0.8.
+
+Final confirmed settings included:
+
+- Traktor Multi-Core Processing OFF;
+- 384-sample buffer (~8 ms reported overall latency);
+- Touch Bar Expanded Control Strip;
+- automatic brightness OFF;
+- True Tone ON;
+- Reduce Motion ON;
+- permanent Spotlight Privacy exclusions documented in `QUALIFIED_RUNTIME_SETTINGS_v8_1_5.md`;
+- v8.1.5 automatic Spotlight guard.
+
+The Spotlight guard was directly observed disabling indexing when Traktor started, and Guy subsequently repeated start/stop testing successfully.
+
+Guy then tested normal mixing with Traktor Mix Recorder active while Chrome and ChatGPT were also open. He reports:
+
+- smooth UI;
+- no UI glitches;
+- no pops/clicks;
+- no crackling;
+- no audio drops;
+- recording functioning normally.
+
+This materially changes the interpretation of the earlier recording-on/off comparison: Mix Recorder was a confounding workload variable, but the final evidence does **not** support treating recording itself as a required-disable condition.
+
+Guy accepted v8.0.8/v8.1.5 plus the documented settings as the de facto running baseline.
+
+The causal conclusion remains intentionally narrower: the successful result validates the combined configuration, not a single-cause theory for the earlier UI/audio symptoms.
+
+The bounded catastrophic zero-byte USB recovery path remains unexercised because no final test reproduced that catastrophic event.
