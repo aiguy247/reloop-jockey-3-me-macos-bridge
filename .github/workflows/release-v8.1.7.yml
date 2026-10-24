@@ -1,0 +1,61 @@
+name: Release v8.1.7
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/release-v8.1.7.yml'
+      - 'release/v8.1.7/**'
+      - 'docs/GITHUB_RELEASE_v8_1_7.md'
+      - 'docs/RELEASE_PACKAGE_README_v8_1_7.md'
+      - 'docs/RELEASE_NOTES_v8_1_7.md'
+      - 'docs/QUALIFIED_RUNTIME_SETTINGS_v8_1_7.md'
+      - 'docs/V8_1_7_EVENT_DRIVEN_GUARDS.md'
+      - 'tools/release/build_release_package_v8_1_7.py'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out release commit
+        uses: actions/checkout@v4
+
+      - name: Validate qualified package scripts
+        run: |
+          bash -n release/v8.1.7/install.sh
+          bash -n release/v8.1.7/status.sh
+          bash -n release/v8.1.7/rollback_automation_only.sh
+          bash -n release/v8.1.7/source/reloop_bridge_service_v8_1_5.sh
+
+      - name: Verify and stage exact physically-qualified artifact
+        run: python3 tools/release/build_release_package_v8_1_7.py
+
+      - name: Create GitHub release and upload exact qualified artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG="v8.1.7"
+          ZIP="dist/Reloop_Jockey_3_ME_Bridge_v8_1_7.zip"
+          SHA="dist/Reloop_Jockey_3_ME_Bridge_v8_1_7.zip.sha256"
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists; leaving it unchanged."
+            exit 0
+          fi
+
+          cp docs/GITHUB_RELEASE_v8_1_7.md /tmp/release-notes.md
+          printf '\n## Release asset SHA-256\n\n```text\n' >> /tmp/release-notes.md
+          cat "$SHA" >> /tmp/release-notes.md
+          printf '```\n' >> /tmp/release-notes.md
+
+          gh release create "$TAG" \
+            "$ZIP" \
+            "$SHA" \
+            --target "$GITHUB_SHA" \
+            --title "Reloop Jockey 3 ME macOS Bridge v8.1.7" \
+            --notes-file /tmp/release-notes.md
