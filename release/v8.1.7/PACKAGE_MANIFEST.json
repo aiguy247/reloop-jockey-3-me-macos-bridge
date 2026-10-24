@@ -1,0 +1,10 @@
+{
+  "product": "Reloop Bridge",
+  "package_version": "8.1.7-candidate7",
+  "qualified_engine_preferred_sha256": "66355176b2bc4193e4a749c72a56ab48771b71ed91d1cb8f638fd924961618a4",
+  "bridge_supervisor": "v8.1.5 behavior preserved",
+  "traktor_lifecycle": "NSWorkspace events",
+  "reduce_motion_transition": "accepted v8.1.6 refresh + fresh-process verification",
+  "spotlight_transition": "event-driven authenticated Unix-domain socket",
+  "new_automation_steady_state_polling": false
+}
