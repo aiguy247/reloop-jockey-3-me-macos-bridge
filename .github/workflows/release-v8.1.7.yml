@@ -24,15 +24,20 @@ jobs:
       - name: Check out release commit
         uses: actions/checkout@v4
 
-      - name: Validate qualified package scripts
-        run: |
-          bash -n release/v8.1.7/install.sh
-          bash -n release/v8.1.7/status.sh
-          bash -n release/v8.1.7/rollback_automation_only.sh
-          bash -n release/v8.1.7/source/reloop_bridge_service_v8_1_5.sh
-
-      - name: Verify and stage exact physically-qualified artifact
+      - name: Reconstruct and verify exact physically-qualified artifact
         run: python3 tools/release/build_release_package_v8_1_7.py
+
+      - name: Validate scripts inside exact qualified artifact
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/reloop-v817
+          mkdir -p /tmp/reloop-v817
+          unzip -q dist/Reloop_Jockey_3_ME_Bridge_v8_1_7.zip -d /tmp/reloop-v817
+          ROOT="/tmp/reloop-v817/Reloop_Bridge_v8_1_7_CANDIDATE7"
+          bash -n "$ROOT/install.sh"
+          bash -n "$ROOT/status.sh"
+          bash -n "$ROOT/rollback_automation_only.sh"
+          bash -n "$ROOT/source/reloop_bridge_service_v8_1_5.sh"
 
       - name: Create GitHub release and upload exact qualified artifact
         env:
