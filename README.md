@@ -21,25 +21,31 @@ The bridge talks directly to the controller over USB, exposes a CoreMIDI endpoin
 | Component | Current version / setting |
 |---|---|
 | Bridge engine | **v8.0.8** |
-| Service/package on the qualified Mac | **v8.1.6** |
-| Bridge supervisor component | **v8.1.5 (unchanged)** |
-| Spotlight guard component | **v8.1.5 (unchanged)** |
-| Reduce Motion guard | **v8.1.6** |
+| Service/package | **v8.1.7** |
+| Bridge supervisor behavior | **v8.1.5 (unchanged)** |
+| Spotlight guard | **v8.1.7 event-driven helper** |
+| Reduce Motion / Traktor lifecycle guard | **v8.1.7 event-driven WatchGuard** |
+| Qualified runtime artifact | **v8.1.7 Candidate 7 promoted unchanged** |
 | Traktor observed | **3.11.1.17** |
 | Tested OS | **macOS Sonoma 14.8.9, Apple Silicon** |
 | Controller firmware observed | **1.0.6** |
-| Traktor audio buffer size | **384** |
+| Traktor sample rate | **48 kHz** |
+| Traktor audio buffer size | **512 samples** |
 | Traktor Multi-Core Processing | **OFF** |
 | Traktor mapping | **Five mapping-only Controller Manager exports** |
 | Mapping checksums | `checksums/MAPPING_ONLY_SHA256SUMS.txt` |
 
-Engine source SHA-256:
+Qualified engine binary SHA-256:
 
-`4fed39df7a9b2a792ceca42c68bf8d5c278e96505717888998411563b6e00537`
+`66355176b2bc4193e4a749c72a56ab48771b71ed91d1cb8f638fd924961618a4`
 
-The final configuration has been live-tested repeatedly on the physical controller. Guy reports smooth UI operation, normal mixing and recording, and no pops, crackling or audio dropouts in the final tests, including with Chrome and ChatGPT open.
+Exact physically-qualified v8.1.7 Candidate 7 ZIP SHA-256:
 
-See `docs/QUALIFIED_RUNTIME_SETTINGS_v8_1_6.md` and `docs/QUALIFICATION.md`.
+`8ebc35f548ec231c64214f68a7e481d5885d093e1b10ce2cfbfde6a0b48a801d`
+
+Candidate 7 passed the full installer/reversible-state QA and then completed approximately one hour of live DJ operation on 23 October 2026. The reported result was clean: no crackling, no popping, no audio dropouts and no observed bridge/control failure.
+
+See `docs/QUALIFIED_RUNTIME_SETTINGS_v8_1_7.md` and `docs/RELEASE_NOTES_v8_1_7.md`.
 
 ## What the bridge does
 
@@ -51,39 +57,59 @@ See `docs/QUALIFIED_RUNTIME_SETTINGS_v8_1_6.md` and `docs/QUALIFICATION.md`.
 - Flashes the actual master's trash LED with Beat Phase.
 - Mirrors that Beat Phase to the actual master's Play/Pause LED.
 - Restores normal Play/Pause LED state when master status moves away.
-- v8.0.8 adds Phase 4 USB/MIDI diagnostics and a bounded recovery path for the catastrophic zero-byte USB failure class.
+- v8.0.8 includes Phase 4 USB/MIDI diagnostics and a bounded recovery path for the catastrophic zero-byte USB failure class.
 
-The bounded catastrophic-recovery path has **not yet been exercised in a reproduced catastrophic event**. Do not interpret successful normal-operation qualification as proof of that specific recovery path.
+The bounded catastrophic-recovery path has **not yet been exercised in a reproduced catastrophic event**. Successful normal-operation qualification is not proof of that specific recovery path.
 
-## Automatic Traktor-time macOS controls
+## Automatic Traktor-time macOS controls — v8.1.7
+
+v8.1.7 changes the automation layer without changing the qualified bridge engine or bridge-supervisor behavior.
+
+### Event-driven lifecycle detection
+
+The per-user LaunchAgent:
+
+`com.guy.reloopbridge.watchguard`
+
+subscribes to macOS NSWorkspace launch and termination events for Traktor. It performs one startup reconciliation for recovery and otherwise sleeps in its run loop. There is no recurring Traktor process-detection timer in the new automation layer.
 
 ### Spotlight
 
-The qualified Mac retains the v8.1.5 root LaunchDaemon:
+The root LaunchDaemon remains:
 
 `com.guy.reloopbridge.spotlightguard`
 
-It remembers the previous Spotlight indexing state, disables filesystem indexing while Traktor runs, and restores the previous state after Traktor exits.
+but its implementation is now event-driven. It blocks on an authenticated Unix-domain socket and runs `mdutil` only for state transitions or recovery. The old recurring Spotlight status loop is removed.
 
-### Reduce Motion — new in v8.1.6
+### Reduce Motion
 
-v8.1.6 adds a per-user LaunchAgent:
+The same WatchGuard manages Reduce Motion. It keeps the effective-state write/refresh mechanism that was already live-proven in v8.1.6, but removes the v8.1.6 two-second Traktor polling loop.
 
-`com.guy.reloopbridge.reducemotionguard`
+### State-safety rule
 
-It:
+For both Spotlight and Reduce Motion:
 
-- records the effective Reduce Motion state before Traktor starts;
-- enables Reduce Motion while Traktor runs;
-- restores the exact previous state after Traktor exits;
-- refreshes already-running macOS UI listeners without restarting Dock or Finder;
-- requires a one-time Full Disk Access grant on the qualified Sonoma Mac.
+- save the original state before changing it;
+- if already at the DJ target, do not write;
+- otherwise change once and verify;
+- on Traktor exit, compare against the saved original;
+- if already restored, do not write;
+- otherwise restore once and verify;
+- keep durable recovery state until restoration is confirmed.
 
-The accepted candidate v5 behavior was live-confirmed before production promotion. The production helper uses the same control logic with stable paths and launchd supervision.
+The WatchGuard also uses a save barrier: both original states must be safely persisted before either DJ-state change is applied.
+
+See `docs/V8_1_7_EVENT_DRIVEN_GUARDS.md`.
+
+## Exact release promotion
+
+The v8.1.7 GitHub Release publishes the **exact Candidate 7 ZIP that was physically qualified**, byte-for-byte. The workflow verifies its SHA-256 before publication.
+
+The package intentionally retains its internal `8.1.7-candidate7` identifier rather than rebuilding after qualification merely to change a version label.
 
 ## Mapping scope
 
-The five files under `mapping/` are **mapping-only exports**. They do not contain global Traktor preferences, audio settings, playlists, personal paths or unrelated controllers.
+The five files under `mapping/` are mapping-only exports. They do not contain global Traktor preferences, audio settings, playlists, personal paths or unrelated controllers.
 
 Current Deck A/B additions include:
 
@@ -99,7 +125,8 @@ See `docs/CURRENT_MAPPING_SPEC.md`.
 
 ```text
 src/        qualified and experimental Objective-C bridge source
-service/    exact service/helper artifacts used on the original qualified Mac
+service/    historical production service/helper artifacts
+release/    exact physically-qualified release artifacts and source snapshots
 mapping/    five current mapping-only Controller Manager exports
 patches/    source-level bridge diffs
 tools/      mapping, Phase 4 diagnostic and release tooling
@@ -109,23 +136,21 @@ checksums/  SHA-256 records
 
 ## Installation scope
 
-This public repository is **source + mappings + engineering documentation** plus the v8.1.6 release package for the original qualified Mac.
+The v8.1.7 release asset is the exact package qualified on the original Mac. It is intended for that existing qualified environment, not as a generic fresh-machine installer.
 
-The v8.1.6 release asset upgrades the existing v8.1.5 qualified environment. It is **not a universal fresh-machine installer**.
-
-For details, see `docs/INSTALLATION.md`.
+For details, see `docs/RELEASE_PACKAGE_README_v8_1_7.md`.
 
 ## Current release notes
 
 See:
 
-`docs/RELEASE_NOTES_v8_0_8_v8_1_6.md`
+`docs/RELEASE_NOTES_v8_1_7.md`
 
 ## Engineering rule
 
-Structural validation, runtime evidence and live hardware qualification are kept separate. A successful compile or parser pass is not described as hardware qualification.
+Structural validation, runtime evidence and live hardware qualification are kept separate. A successful compile or parser pass is not described as physical qualification.
 
-`main` is the current public baseline. Experimental work belongs on development branches until it has been accepted for promotion.
+`main` is the current accepted baseline. Experimental work belongs on development branches until it has been accepted for promotion.
 
 ## Public status
 
