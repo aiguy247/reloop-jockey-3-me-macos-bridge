@@ -21,11 +21,11 @@ The bridge talks directly to the controller over USB, exposes a CoreMIDI endpoin
 | Component | Current version / setting |
 |---|---|
 | Bridge engine | **v8.0.8** |
-| Service/package | **v8.1.7** |
-| Bridge supervisor behavior | **v8.1.5 (unchanged)** |
+| Qualified development baseline | **v8.1.8 Candidate 1** |
+| Bridge supervisor | **v8.1.8 event-driven IOKit supervisor** |
 | Spotlight guard | **v8.1.7 event-driven helper** |
 | Reduce Motion / Traktor lifecycle guard | **v8.1.7 event-driven WatchGuard** |
-| Qualified runtime artifact | **v8.1.7 Candidate 7 promoted unchanged** |
+| Latest published release | **v8.1.7** |
 | Traktor observed | **3.11.1.17** |
 | Tested OS | **macOS Sonoma 14.8.9, Apple Silicon** |
 | Controller firmware observed | **1.0.6** |
@@ -43,9 +43,15 @@ Exact physically-qualified v8.1.7 Candidate 7 ZIP SHA-256:
 
 `8ebc35f548ec231c64214f68a7e481d5885d093e1b10ce2cfbfde6a0b48a801d`
 
+Qualified v8.1.8 Candidate 1 ZIP SHA-256:
+
+`853f29e6decfbb5291ae292ec9e43570ce0e146a48fee345999534024e9d837b`
+
+v8.1.8 replaces the final one-second controller-presence polling loop with event-driven IOKit USB arrival/removal notifications plus one event-driven wake reconciliation. Power-cycle, physical USB unplug/replug, sleep/wake and Traktor/audio qualification passed on the physical setup. v8.1.8 is checkpointed in GitHub as the qualified development baseline but is not yet published as a GitHub Release.
+
 Candidate 7 passed the full installer/reversible-state QA and then completed approximately one hour of live DJ operation on 23 October 2026. The reported result was clean: no crackling, no popping, no audio dropouts and no observed bridge/control failure.
 
-See `docs/QUALIFIED_RUNTIME_SETTINGS_v8_1_7.md` and `docs/RELEASE_NOTES_v8_1_7.md`.
+See `docs/QUALIFIED_RUNTIME_SETTINGS_v8_1_8.md`, `docs/V8_1_8_EVENT_DRIVEN_USB_SUPERVISOR.md`, and the published v8.1.7 release notes.
 
 ## What the bridge does
 
