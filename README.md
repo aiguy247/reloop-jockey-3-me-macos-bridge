@@ -20,12 +20,12 @@ The bridge talks directly to the controller over USB, exposes a CoreMIDI endpoin
 
 | Component | Current version / setting |
 |---|---|
-| Bridge engine | **v8.0.8** |
-| Qualified development baseline | **v8.1.8 Candidate 1** |
-| Bridge supervisor | **v8.1.8 event-driven IOKit supervisor** |
+| Bridge engine | **v8.0.9-c4** |
+| Qualified development baseline | **v8.2.0** |
+| Bridge supervisor | **v8.2.0 Candidate 8 architecture** |
 | Spotlight guard | **v8.1.7 event-driven helper** |
 | Reduce Motion / Traktor lifecycle guard | **v8.1.7 event-driven WatchGuard** |
-| Latest published release | **v8.1.7** |
+| Latest published release | **v8.2.0** |
 | Traktor observed | **3.11.1.17** |
 | Tested OS | **macOS Sonoma 14.8.9, Apple Silicon** |
 | Controller firmware observed | **1.0.6** |
@@ -37,7 +37,7 @@ The bridge talks directly to the controller over USB, exposes a CoreMIDI endpoin
 
 Qualified engine binary SHA-256:
 
-`66355176b2bc4193e4a749c72a56ab48771b71ed91d1cb8f638fd924961618a4`
+`17421220f6d677640b03ebbd245c429a91506333326e8d55272f59d5c9d9f7a5`
 
 Exact physically-qualified v8.1.7 Candidate 7 ZIP SHA-256:
 
@@ -47,11 +47,11 @@ Qualified v8.1.8 Candidate 1 ZIP SHA-256:
 
 `853f29e6decfbb5291ae292ec9e43570ce0e146a48fee345999534024e9d837b`
 
-v8.1.8 replaces the final one-second controller-presence polling loop with event-driven IOKit USB arrival/removal notifications plus one event-driven wake reconciliation. Power-cycle, physical USB unplug/replug, sleep/wake and Traktor/audio qualification passed on the physical setup. v8.1.8 is checkpointed in GitHub as the qualified development baseline but is not yet published as a GitHub Release.
+v8.2.0 promotes the Candidate 8 SMAppService architecture together with the v8.0.9-c4 engine recovery behavior. c4 trims stale queued audio after long successful USB stalls and exits cleanly after two zero-byte playback writes so the supervisor can attempt transport recovery.
 
 Candidate 7 passed the full installer/reversible-state QA and then completed approximately one hour of live DJ operation on 23 October 2026. The reported result was clean: no crackling, no popping, no audio dropouts and no observed bridge/control failure.
 
-See `docs/QUALIFIED_RUNTIME_SETTINGS_v8_1_8.md`, `docs/V8_1_8_EVENT_DRIVEN_USB_SUPERVISOR.md`, and the published v8.1.7 release notes.
+See `docs/QUALIFIED_RUNTIME_SETTINGS_v8_2_0.md` and `docs/RELEASE_NOTES_v8_2_0.md`.
 
 ## What the bridge does
 
@@ -65,7 +65,7 @@ See `docs/QUALIFIED_RUNTIME_SETTINGS_v8_1_8.md`, `docs/V8_1_8_EVENT_DRIVEN_USB_S
 - Restores normal Play/Pause LED state when master status moves away.
 - v8.0.8 includes Phase 4 USB/MIDI diagnostics and a bounded recovery path for the catastrophic zero-byte USB failure class.
 
-The bounded catastrophic-recovery path has **not yet been exercised in a reproduced catastrophic event**. Successful normal-operation qualification is not proof of that specific recovery path.
+The c4 hard-failure path has been exercised in reproduced USB transport wedges. It exits cleanly and allows bounded supervisor restart attempts, but a physical controller power-cycle can still be required if the underlying USB transport itself remains wedged.
 
 ## Automatic Traktor-time macOS controls — v8.1.7
 
@@ -142,15 +142,15 @@ checksums/  SHA-256 records
 
 ## Installation scope
 
-The v8.1.7 release asset is the exact package qualified on the original Mac. It is intended for that existing qualified environment, not as a generic fresh-machine installer.
+The v8.2.0 release asset contains the qualified Candidate 8 architecture and exact c4 recovery behavior for the tested environment.
 
-For details, see `docs/RELEASE_PACKAGE_README_v8_1_7.md`.
+For details, see `docs/RELEASE_NOTES_v8_2_0.md`.
 
 ## Current release notes
 
 See:
 
-`docs/RELEASE_NOTES_v8_1_7.md`
+`docs/RELEASE_NOTES_v8_2_0.md`
 
 ## Engineering rule
 
