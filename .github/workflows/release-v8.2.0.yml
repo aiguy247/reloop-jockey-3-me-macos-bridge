@@ -9,6 +9,9 @@ on:
       - 'docs/GITHUB_RELEASE_v8_2_0.md'
       - 'docs/RELEASE_NOTES_v8_2_0.md'
       - 'docs/QUALIFIED_RUNTIME_SETTINGS_v8_2_0.md'
+      - 'tools/release/build_release_package_v8_2_0.py'
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -18,22 +21,47 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Check out release commit
+        uses: actions/checkout@v4
 
-      - name: Reconstruct and verify exact qualified release asset
+      - name: Reconstruct and verify exact qualified artifact
+        run: python3 tools/release/build_release_package_v8_2_0.py
+
+      - name: Validate scripts inside exact qualified artifact
         run: |
           set -euo pipefail
-          base64 -d release/v8.2.0/exact_release_asset.b64 > /tmp/Reloop_Jockey_3_ME_Bridge_v8_2_0.zip
-          echo "e46cad077e3724b59a95abf704aa3b316342a653a4ee30a778e5e70366c1134b  /tmp/Reloop_Jockey_3_ME_Bridge_v8_2_0.zip" | sha256sum -c -
+          rm -rf /tmp/reloop-v820
+          mkdir -p /tmp/reloop-v820
+          unzip -q dist/Reloop_Jockey_3_ME_Bridge_v8_2_0.zip -d /tmp/reloop-v820
+          ROOT="/tmp/reloop-v820/Reloop_Bridge_v8_2_0"
 
-      - name: Create GitHub release
+          bash -n "$ROOT/install.sh"
+          bash -n "$ROOT/status.sh"
+
+          bash -n "$ROOT/candidate8/install.sh"
+          bash -n "$ROOT/candidate8/status.sh"
+          bash -n "$ROOT/candidate8/rollback_to_v8_1_8.sh"
+          bash -n "$ROOT/candidate8/test_audio_path.sh"
+          bash -n "$ROOT/candidate8/test_usb_cycle.sh"
+
+          bash -n "$ROOT/engine_c4/install.sh"
+          bash -n "$ROOT/engine_c4/status.sh"
+          bash -n "$ROOT/engine_c4/rollback.sh"
+          bash -n "$ROOT/engine_c4/collect_result.sh"
+
+          python3 -m py_compile "$ROOT/candidate8/audit_candidate8.py"
+          python3 -m py_compile "$ROOT/engine_c4/audit_package.py"
+          python3 -m py_compile "$ROOT/engine_c4/patch_engine.py"
+
+      - name: Create GitHub release and upload exact qualified artifact
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           TAG="v8.2.0"
-          ZIP="/tmp/Reloop_Jockey_3_ME_Bridge_v8_2_0.zip"
-          SHA="release/v8.2.0/Reloop_Jockey_3_ME_Bridge_v8_2_0.zip.sha256"
+          ZIP="dist/Reloop_Jockey_3_ME_Bridge_v8_2_0.zip"
+          SHA="dist/Reloop_Jockey_3_ME_Bridge_v8_2_0.zip.sha256"
 
           if gh release view "$TAG" >/dev/null 2>&1; then
             echo "Release $TAG already exists; leaving it unchanged."
@@ -45,4 +73,9 @@ jobs:
           cat "$SHA" >> /tmp/release-notes.md
           printf '```\n' >> /tmp/release-notes.md
 
-          gh release create "$TAG"             "$ZIP"             "$SHA"             --target "$GITHUB_SHA"             --title "Reloop Jockey 3 ME macOS Bridge v8.2.0"             --notes-file /tmp/release-notes.md
+          gh release create "$TAG" \
+            "$ZIP" \
+            "$SHA" \
+            --target "$GITHUB_SHA" \
+            --title "Reloop Jockey 3 ME macOS Bridge v8.2.0" \
+            --notes-file /tmp/release-notes.md
