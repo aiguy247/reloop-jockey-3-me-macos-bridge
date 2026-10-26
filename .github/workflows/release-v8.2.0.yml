@@ -1,0 +1,43 @@
+name: Release v8.2.0
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/release-v8.2.0.yml'
+      - 'release/v8.2.0/**'
+      - 'docs/GITHUB_RELEASE_v8_2_0.md'
+      - 'docs/RELEASE_NOTES_v8_2_0.md'
+      - 'docs/QUALIFIED_RUNTIME_SETTINGS_v8_2_0.md'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify exact qualified release asset
+        run: |
+          set -euo pipefail
+          cd release/v8.2.0
+          shasum -a 256 -c Reloop_Jockey_3_ME_Bridge_v8_2_0.zip.sha256
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG="v8.2.0"
+          ZIP="release/v8.2.0/Reloop_Jockey_3_ME_Bridge_v8_2_0.zip"
+          SHA="release/v8.2.0/Reloop_Jockey_3_ME_Bridge_v8_2_0.zip.sha256"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists; leaving it unchanged."
+            exit 0
+          fi
+          cp docs/GITHUB_RELEASE_v8_2_0.md /tmp/release-notes.md
+          printf '\n## Release asset SHA-256\n\n```text\n' >> /tmp/release-notes.md
+          cat "$SHA" >> /tmp/release-notes.md
+          printf '```\n' >> /tmp/release-notes.md
+          gh release create "$TAG" "$ZIP" "$SHA" --target "$GITHUB_SHA" --title "Reloop Jockey 3 ME macOS Bridge v8.2.0" --notes-file /tmp/release-notes.md
