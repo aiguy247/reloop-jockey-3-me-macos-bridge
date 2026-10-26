@@ -1,0 +1,11 @@
+{
+  "product": "Reloop Jockey 3 ME macOS Bridge",
+  "release_version": "8.2.0",
+  "service_architecture": "8.2.0 Candidate 8",
+  "engine": "v8.0.9-c4",
+  "engine_sha256": "17421220f6d677640b03ebbd245c429a91506333326e8d55272f59d5c9d9f7a5",
+  "qualified_release_zip_sha256": "e46cad077e3724b59a95abf704aa3b316342a653a4ee30a778e5e70366c1134b",
+  "qualified_release_zip_size": 75100,
+  "candidate8_package_sha256": "b164cda6763691d29481e29e4e854b0bad5c2d9ba96b0a4f54245324ac84111b",
+  "c4_package_sha256": "1db6f4fb402fea2a47e559df34203353c75fd72a918c25e76179fbf251dc9417"
+}
