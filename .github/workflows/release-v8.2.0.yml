@@ -1,0 +1,66 @@
+name: Release v8.2.0
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/release-v8.2.0.yml'
+      - 'release/v8.2.0/**'
+      - 'docs/GITHUB_RELEASE_v8_2_0.md'
+      - 'docs/RELEASE_NOTES_v8_2_0.md'
+      - 'docs/QUALIFIED_RUNTIME_SETTINGS_v8_2_0.md'
+      - 'README.md'
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out release commit
+        uses: actions/checkout@v4
+
+      - name: Verify exact release ZIP
+        run: |
+          set -euo pipefail
+          echo "e46cad077e3724b59a95abf704aa3b316342a653a4ee30a778e5e70366c1134b  release/v8.2.0/Reloop_Jockey_3_ME_Bridge_v8_2_0.zip" | shasum -a 256 -c -
+
+      - name: Audit embedded Candidate 8 and c4 packages
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/reloop-v820
+          mkdir -p /tmp/reloop-v820
+          unzip -q release/v8.2.0/Reloop_Jockey_3_ME_Bridge_v8_2_0.zip -d /tmp/reloop-v820
+          ROOT="/tmp/reloop-v820/Reloop_Bridge_v8_2_0"
+          (cd "$ROOT/candidate8" && shasum -a 256 -c SHA256SUMS.txt)
+          (cd "$ROOT/engine_c4" && shasum -a 256 -c SHA256SUMS.txt)
+          bash -n "$ROOT/install.sh"
+          bash -n "$ROOT/status.sh"
+          bash -n "$ROOT/candidate8/install.sh"
+          bash -n "$ROOT/engine_c4/install.sh"
+          python3 "$ROOT/candidate8/audit_candidate8.py" "$ROOT/candidate8"
+          python3 "$ROOT/engine_c4/audit_package.py"
+
+      - name: Create GitHub release
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG="v8.2.0"
+          ZIP="release/v8.2.0/Reloop_Jockey_3_ME_Bridge_v8_2_0.zip"
+          SHA="release/v8.2.0/QUALIFIED_ARTIFACT_SHA256.txt"
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists; leaving it unchanged."
+            exit 0
+          fi
+
+          gh release create "$TAG" "$ZIP" "$SHA" \
+            --target "$GITHUB_SHA" \
+            --title "Reloop Jockey 3 ME macOS Bridge v8.2.0" \
+            --notes-file docs/GITHUB_RELEASE_v8_2_0.md
