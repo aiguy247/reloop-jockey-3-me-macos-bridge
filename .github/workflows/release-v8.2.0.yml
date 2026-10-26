@@ -24,27 +24,139 @@ jobs:
       - name: Check out release commit
         uses: actions/checkout@v4
 
-      - name: Inspect uploaded release ZIP
+      - name: Reconstruct exact qualified file-data stream
         run: |
           set -euo pipefail
-          shasum -a 256 release/v8.2.0/Reloop_Jockey_3_ME_Bridge_v8_2_0.zip
-          unzip -t release/v8.2.0/Reloop_Jockey_3_ME_Bridge_v8_2_0.zip
+          cat release/v8.2.0/base64/part_01.b64 \
+              release/v8.2.0/base64/part_02.b64 \
+              release/v8.2.0/base64/part_03.b64 \
+              release/v8.2.0/base64/part_04.b64 \
+              release/v8.2.0/base64/part_05.b64 \
+              release/v8.2.0/base64/part_06.b64 \
+              release/v8.2.0/base64/part_07.b64 \
+              release/v8.2.0/base64/part_08.b64 \
+              release/v8.2.0/base64/part_09.b64 \
+              release/v8.2.0/base64/part_10.b64 \
+              release/v8.2.0/base64/part_11.b64 \
+              release/v8.2.0/base64/part_12.b64 \
+              release/v8.2.0/archive_data_tail.b64 \
+            | base64 --decode > /tmp/reloop-v820-prefix.bin
+          test "$(wc -c < /tmp/reloop-v820-prefix.bin)" -eq 72280
+          echo "437193cd7d4fab93ef6c7713c70ca94e9e4ab887d1afcbed543b8ecd7e032c8e  /tmp/reloop-v820-prefix.bin" | sha256sum -c -
 
-      - name: Audit embedded Candidate 8 and c4 packages
+      - name: Extract and verify all 29 release files
         run: |
           set -euo pipefail
-          rm -rf /tmp/reloop-v820
-          mkdir -p /tmp/reloop-v820
-          unzip -q release/v8.2.0/Reloop_Jockey_3_ME_Bridge_v8_2_0.zip -d /tmp/reloop-v820
+          python3 - <<'PY'
+          from pathlib import Path
+          import struct, zlib, binascii, shutil
+
+          data = Path("/tmp/reloop-v820-prefix.bin").read_bytes()
+          out = Path("/tmp/reloop-v820")
+          shutil.rmtree(out, ignore_errors=True)
+          out.mkdir(parents=True)
+
+          off = 0
+          count = 0
+          while off < len(data):
+              if data[off:off+4] != b"PK\x03\x04":
+                  raise SystemExit(f"bad local-header signature at offset {off}")
+              if off + 30 > len(data):
+                  raise SystemExit("truncated local header")
+
+              sig, ver, flags, method, mtime, mdate, crc, csize, usize, nlen, xlen = struct.unpack_from(
+                  "<IHHHHHIIIHH", data, off
+              )
+              if flags & 0x08:
+                  raise SystemExit("unexpected ZIP data-descriptor flag")
+              name_start = off + 30
+              name_end = name_start + nlen
+              extra_end = name_end + xlen
+              comp_end = extra_end + csize
+              if comp_end > len(data):
+                  raise SystemExit("truncated compressed payload")
+
+              name = data[name_start:name_end].decode("utf-8")
+              if not name.startswith("Reloop_Bridge_v8_2_0/"):
+                  raise SystemExit(f"unexpected archive path: {name}")
+              rel = name[len("Reloop_Bridge_v8_2_0/"):]
+              dest = (out / "Reloop_Bridge_v8_2_0" / rel).resolve()
+              root = (out / "Reloop_Bridge_v8_2_0").resolve()
+              if root not in dest.parents:
+                  raise SystemExit(f"unsafe archive path: {name}")
+
+              comp = data[extra_end:comp_end]
+              if method == 8:
+                  raw = zlib.decompress(comp, -15)
+              elif method == 0:
+                  raw = comp
+              else:
+                  raise SystemExit(f"unsupported compression method {method}")
+
+              if len(raw) != usize:
+                  raise SystemExit(f"size mismatch: {name}")
+              if (binascii.crc32(raw) & 0xffffffff) != crc:
+                  raise SystemExit(f"CRC mismatch: {name}")
+
+              dest.parent.mkdir(parents=True, exist_ok=True)
+              dest.write_bytes(raw)
+              count += 1
+              off = comp_end
+
+          if off != len(data):
+              raise SystemExit(f"did not consume complete stream: {off}/{len(data)}")
+          if count != 29:
+              raise SystemExit(f"expected 29 files, extracted {count}")
+          print(f"extracted-files={count}")
+          PY
+
           ROOT="/tmp/reloop-v820/Reloop_Bridge_v8_2_0"
-          (cd "$ROOT/candidate8" && shasum -a 256 -c SHA256SUMS.txt)
-          (cd "$ROOT/engine_c4" && shasum -a 256 -c SHA256SUMS.txt)
+          (cd "$ROOT/candidate8" && sha256sum -c SHA256SUMS.txt)
+          (cd "$ROOT/engine_c4" && sha256sum -c SHA256SUMS.txt)
+          (cd "$ROOT" && sha256sum -c SHA256SUMS.txt)
+
           bash -n "$ROOT/install.sh"
           bash -n "$ROOT/status.sh"
           bash -n "$ROOT/candidate8/install.sh"
           bash -n "$ROOT/engine_c4/install.sh"
+
           python3 "$ROOT/candidate8/audit_candidate8.py" "$ROOT/candidate8"
           python3 "$ROOT/engine_c4/audit_package.py"
+
+      - name: Rebuild exact v8.2.0 release ZIP
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          python3 - <<'PY'
+          from pathlib import Path
+          import zipfile
+
+          stage = Path("/tmp/reloop-v820/Reloop_Bridge_v8_2_0")
+          zip_path = Path("dist/Reloop_Jockey_3_ME_Bridge_v8_2_0.zip")
+
+          with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9) as z:
+              for p in sorted(stage.rglob("*")):
+                  if p.is_file():
+                      arc = Path("Reloop_Bridge_v8_2_0") / p.relative_to(stage)
+                      info = zipfile.ZipInfo(str(arc))
+                      info.date_time = (2026, 10, 26, 12, 0, 0)
+                      mode = 0o755 if p.suffix == ".sh" or p.name.endswith(".py") else 0o644
+                      info.external_attr = mode << 16
+                      z.writestr(
+                          info,
+                          p.read_bytes(),
+                          compress_type=zipfile.ZIP_DEFLATED,
+                          compresslevel=9,
+                      )
+          PY
+
+          test "$(wc -c < dist/Reloop_Jockey_3_ME_Bridge_v8_2_0.zip)" -eq 75100
+          echo "e46cad077e3724b59a95abf704aa3b316342a653a4ee30a778e5e70366c1134b  dist/Reloop_Jockey_3_ME_Bridge_v8_2_0.zip" | sha256sum -c -
+          unzip -t dist/Reloop_Jockey_3_ME_Bridge_v8_2_0.zip
+          printf '%s  %s\n' \
+            "e46cad077e3724b59a95abf704aa3b316342a653a4ee30a778e5e70366c1134b" \
+            "Reloop_Jockey_3_ME_Bridge_v8_2_0.zip" \
+            > dist/Reloop_Jockey_3_ME_Bridge_v8_2_0.zip.sha256
 
       - name: Create GitHub release
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -53,15 +165,20 @@ jobs:
         run: |
           set -euo pipefail
           TAG="v8.2.0"
-          ZIP="release/v8.2.0/Reloop_Jockey_3_ME_Bridge_v8_2_0.zip"
-          SHA="release/v8.2.0/QUALIFIED_ARTIFACT_SHA256.txt"
+          ZIP="dist/Reloop_Jockey_3_ME_Bridge_v8_2_0.zip"
+          SHA="dist/Reloop_Jockey_3_ME_Bridge_v8_2_0.zip.sha256"
 
           if gh release view "$TAG" >/dev/null 2>&1; then
             echo "Release $TAG already exists; leaving it unchanged."
             exit 0
           fi
 
+          cp docs/GITHUB_RELEASE_v8_2_0.md /tmp/release-notes.md
+          printf '\n## Release asset SHA-256\n\n```text\n' >> /tmp/release-notes.md
+          cat "$SHA" >> /tmp/release-notes.md
+          printf '```\n' >> /tmp/release-notes.md
+
           gh release create "$TAG" "$ZIP" "$SHA" \
             --target "$GITHUB_SHA" \
             --title "Reloop Jockey 3 ME macOS Bridge v8.2.0" \
-            --notes-file docs/GITHUB_RELEASE_v8_2_0.md
+            --notes-file /tmp/release-notes.md
